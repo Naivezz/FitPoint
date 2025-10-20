@@ -1,4 +1,4 @@
-package org.naivez.fithub;
+package com.naivez.fithub;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
