@@ -8,7 +8,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -23,3 +23,7 @@ spring:
 logging:
   level:
     org.hibernate.SQL: DEBUG
+
+jwt:
+  secret: "Zk8wX3BqV1RtQ2x3U1ZxY2F1eElUaGhwS3RnYWx6bW9wTg=="
+  expiration: 86400000
