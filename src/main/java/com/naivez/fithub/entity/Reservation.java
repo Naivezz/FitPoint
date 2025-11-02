@@ -32,4 +32,7 @@ public class Reservation {
     private String status;
 
     private Integer rating;
+
+    @Column(length = 1000)
+    private String comment;
 }
