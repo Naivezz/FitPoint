@@ -15,4 +15,7 @@ public interface TrainingClassRepository extends JpaRepository<TrainingClass, Lo
 
     @Query("SELECT tc FROM TrainingClass tc WHERE tc.startTime BETWEEN :start AND :end ORDER BY tc.startTime ASC")
     List<TrainingClass> findClassesBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT tc FROM TrainingClass tc WHERE tc.trainer.id = :trainerId AND tc.startTime BETWEEN :start AND :end ORDER BY tc.startTime ASC")
+    List<TrainingClass> findByTrainerIdAndDateRange(@Param("trainerId") Long trainerId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }
