@@ -158,8 +158,7 @@ public class TrainerService {
                 .collect(Collectors.toList());
 
         return clients.stream()
-                .map(userMapper::toDto)
-                .map(this::toClientProfileDTO)
+                .map(userMapper::toClientProfileDTO)
                 .collect(Collectors.toList());
     }
 
@@ -173,8 +172,7 @@ public class TrainerService {
             throw new RuntimeException("You don't have access to this client's profile");
         }
 
-        UserProfileDTO userProfile = userMapper.toDto(client);
-        return toClientProfileDTO(userProfile);
+        return userMapper.toClientProfileDTO(client);
     }
 
     @Transactional
@@ -422,15 +420,5 @@ public class TrainerService {
         return trainerClasses.stream()
                 .flatMap(tc -> tc.getReservations().stream())
                 .anyMatch(r -> r.getUser().getId().equals(clientId));
-    }
-
-    private ClientProfileDTO toClientProfileDTO(UserProfileDTO userProfile) {
-        return ClientProfileDTO.builder()
-                .id(userProfile.getId())
-                .email(userProfile.getEmail())
-                .firstName(userProfile.getFirstName())
-                .lastName(userProfile.getLastName())
-                .phone(userProfile.getPhone())
-                .build();
     }
 }
