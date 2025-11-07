@@ -1,11 +1,10 @@
 package com.naivez.fithub.mapper;
 
 import com.naivez.fithub.dto.TrainingClassDTO;
+import com.naivez.fithub.dto.TrainingClassRequest;
 import com.naivez.fithub.entity.TrainingClass;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
-import org.mapstruct.ReportingPolicy;
+import com.naivez.fithub.entity.User;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface TrainingClassMapper {
@@ -17,8 +16,19 @@ public interface TrainingClassMapper {
 
     TrainingClass toEntity(TrainingClassDTO trainingClassDTO);
 
+    @Mapping(target = "trainer", ignore = true)
+    @Mapping(target = "room", ignore = true)
+    @Mapping(target = "reservations", ignore = true)
+    TrainingClass toEntity(TrainingClassRequest request);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "trainer", ignore = true)
+    @Mapping(target = "room", ignore = true)
+    @Mapping(target = "reservations", ignore = true)
+    void updateFromRequest(TrainingClassRequest request, @MappingTarget TrainingClass trainingClass);
+
     @Named("getTrainerName")
-    default String getTrainerName(com.naivez.fithub.entity.User trainer) {
+    default String getTrainerName(User trainer) {
         if (trainer == null) {
             return null;
         }

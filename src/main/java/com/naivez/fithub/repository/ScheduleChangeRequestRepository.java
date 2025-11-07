@@ -14,4 +14,7 @@ public interface ScheduleChangeRequestRepository extends JpaRepository<ScheduleC
 
     @Query("SELECT scr FROM ScheduleChangeRequest scr WHERE scr.trainer.id = :trainerId AND scr.status = :status ORDER BY scr.createdAt DESC")
     List<ScheduleChangeRequest> findByTrainerIdAndStatus(@Param("trainerId") Long trainerId, @Param("status") String status);
+
+    @Query("SELECT scr FROM ScheduleChangeRequest scr WHERE scr.status = :status ORDER BY scr.createdAt DESC")
+    List<ScheduleChangeRequest> findByStatus(@Param("status") String status);
 }
