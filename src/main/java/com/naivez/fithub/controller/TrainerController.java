@@ -2,6 +2,7 @@ package com.naivez.fithub.controller;
 
 import com.naivez.fithub.dto.*;
 import com.naivez.fithub.service.NotificationService;
+import com.naivez.fithub.service.PersonalTrainingSessionService;
 import com.naivez.fithub.service.TrainerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.List;
 public class TrainerController {
 
     private final TrainerService trainerService;
+    private final PersonalTrainingSessionService personalTrainingSessionService;
     private final NotificationService notificationService;
 
     @GetMapping("/schedule/daily")
@@ -46,7 +48,7 @@ public class TrainerController {
             @AuthenticationPrincipal UserDetails user,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        List<PersonalTrainingSessionDTO> sessions = trainerService.getPersonalSessionsInRange(
+        List<PersonalTrainingSessionDTO> sessions = personalTrainingSessionService.getPersonalSessionsInRange(
                 user.getUsername(), startDate, endDate);
         return ResponseEntity.ok(sessions);
     }
@@ -157,7 +159,7 @@ public class TrainerController {
             @AuthenticationPrincipal UserDetails user,
             @Valid @RequestBody PersonalTrainingSessionRequest request) {
         try {
-            PersonalTrainingSessionDTO session = trainerService.createPersonalSession(user.getUsername(), request);
+            PersonalTrainingSessionDTO session = personalTrainingSessionService.createPersonalSession(user.getUsername(), request);
             return ResponseEntity.status(HttpStatus.CREATED).body(session);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
@@ -170,7 +172,7 @@ public class TrainerController {
             @PathVariable Long sessionId,
             @Valid @RequestBody PersonalTrainingSessionRequest request) {
         try {
-            PersonalTrainingSessionDTO session = trainerService.updatePersonalSession(user.getUsername(), sessionId, request);
+            PersonalTrainingSessionDTO session = personalTrainingSessionService.updatePersonalSession(user.getUsername(), sessionId, request);
             return ResponseEntity.ok(session);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
@@ -182,7 +184,7 @@ public class TrainerController {
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long sessionId) {
         try {
-            trainerService.cancelPersonalSession(user.getUsername(), sessionId);
+            personalTrainingSessionService.cancelPersonalSession(user.getUsername(), sessionId);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
@@ -195,7 +197,7 @@ public class TrainerController {
             @PathVariable Long sessionId,
             @RequestParam(required = false) String sessionNotes) {
         try {
-            PersonalTrainingSessionDTO session = trainerService.completePersonalSession(user.getUsername(), sessionId, sessionNotes);
+            PersonalTrainingSessionDTO session = personalTrainingSessionService.completePersonalSession(user.getUsername(), sessionId, sessionNotes);
             return ResponseEntity.ok(session);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
@@ -205,7 +207,7 @@ public class TrainerController {
     @GetMapping("/personal-sessions")
     public ResponseEntity<List<PersonalTrainingSessionDTO>> getAllPersonalSessions(
             @AuthenticationPrincipal UserDetails user) {
-        List<PersonalTrainingSessionDTO> sessions = trainerService.getAllPersonalSessions(user.getUsername());
+        List<PersonalTrainingSessionDTO> sessions = personalTrainingSessionService.getAllPersonalSessions(user.getUsername());
         return ResponseEntity.ok(sessions);
     }
 
@@ -214,7 +216,7 @@ public class TrainerController {
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long clientId) {
         List<PersonalTrainingSessionDTO> sessions =
-                trainerService.getClientPersonalSessions(user.getUsername(), clientId);
+                personalTrainingSessionService.getClientPersonalSessions(user.getUsername(), clientId);
         return ResponseEntity.ok(sessions);
     }
 
