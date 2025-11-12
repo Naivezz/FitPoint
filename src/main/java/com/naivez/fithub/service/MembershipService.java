@@ -8,6 +8,7 @@ import com.naivez.fithub.mapper.MembershipMapper;
 import com.naivez.fithub.repository.MembershipRepository;
 import com.naivez.fithub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -60,11 +62,14 @@ public class MembershipService {
 
     @Transactional
     public MembershipDTO purchaseMembership(String userEmail, PurchaseMembershipRequest request) {
+        log.info("Purchasing membership for user: {}, type: {}", userEmail, request.getType());
+
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String type = request.getType().toUpperCase();
         if (!MEMBERSHIP_TYPES.containsKey(type)) {
+            log.warn("Membership purchase failed - invalid type: {} for user: {}", type, userEmail);
             throw new RuntimeException("Invalid membership type. Valid types: MONTHLY, QUARTERLY, ANNUAL");
         }
 
@@ -82,17 +87,22 @@ public class MembershipService {
                 .build();
 
         membership = membershipRepository.save(membership);
+        log.info("Membership purchased successfully - id: {}, user: {}, type: {}, endDate: {}",
+                membership.getId(), userEmail, type, endDate);
 
         return membershipMapper.toDto(membership);
     }
 
     @Transactional
     public MembershipDTO topUpBalance(String userEmail, PurchaseMembershipRequest request) {
+        log.info("Topping up membership for user: {}, type: {}", userEmail, request.getType());
+
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String type = request.getType().toUpperCase();
         if (!MEMBERSHIP_TYPES.containsKey(type)) {
+            log.warn("Membership top-up failed - invalid type: {} for user: {}", type, userEmail);
             throw new RuntimeException("Invalid membership type. Valid types: MONTHLY, QUARTERLY, ANNUAL");
         }
 
@@ -102,6 +112,7 @@ public class MembershipService {
         List<Membership> validMemberships = membershipRepository.findValidByUserId(user.getId(), today);
 
         if (validMemberships.isEmpty()) {
+            log.info("No valid membership found for user: {}, creating new one", userEmail);
             return purchaseMembership(userEmail, request);
         }
 
@@ -110,6 +121,8 @@ public class MembershipService {
         membership.setEndDate(newEndDate);
 
         membership = membershipRepository.save(membership);
+        log.info("Membership topped up successfully - id: {}, user: {}, type: {}, newEndDate: {}",
+                membership.getId(), userEmail, type, newEndDate);
 
         return membershipMapper.toDto(membership);
     }

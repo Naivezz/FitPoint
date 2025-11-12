@@ -13,6 +13,7 @@ import com.naivez.fithub.repository.ReservationRepository;
 import com.naivez.fithub.repository.TrainingClassRepository;
 import com.naivez.fithub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -43,6 +45,8 @@ public class ReservationService {
 
     @Transactional
     public ReservationDTO createReservation(String userEmail, ReservationRequest request) {
+        log.info("Creating reservation - user: {}, classId: {}", userEmail, request.getTrainingClassId());
+
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -50,15 +54,18 @@ public class ReservationService {
                 .orElseThrow(() -> new RuntimeException("Training class not found"));
 
         if (trainingClass.getStartTime().isBefore(LocalDateTime.now())) {
+            log.warn("Reservation failed - class already started: {}", trainingClass.getStartTime());
             throw new RuntimeException("Cannot reserve a class that has already started");
         }
 
         if (reservationRepository.existsByUserAndTrainingClassAndStatus(user, trainingClass, "CONFIRMED")) {
+            log.warn("Reservation failed - duplicate reservation for user: {}, class: {}", userEmail, trainingClass.getId());
             throw new RuntimeException("You already have a reservation for this class");
         }
 
         long confirmedCount = reservationRepository.countConfirmedReservationsByClassId(trainingClass.getId());
         if (confirmedCount >= trainingClass.getCapacity()) {
+            log.warn("Reservation failed - class fully booked: {}, capacity: {}", trainingClass.getId(), trainingClass.getCapacity());
             throw new RuntimeException("Class is fully booked");
         }
 
@@ -70,6 +77,8 @@ public class ReservationService {
                 .build();
 
         reservation = reservationRepository.save(reservation);
+        log.info("Reservation created successfully - id: {}, user: {}, class: {}",
+                reservation.getId(), userEmail, trainingClass.getId());
 
         return reservationMapper.toDto(reservation);
     }
@@ -83,29 +92,36 @@ public class ReservationService {
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
         if (!reservation.getUser().getId().equals(user.getId())) {
+            log.warn("Reservation cancellation failed - user mismatch: {} vs {}", userEmail, reservation.getUser().getEmail());
             throw new RuntimeException("You can only cancel your own reservations");
         }
 
         if ("CANCELLED".equals(reservation.getStatus())) {
+            log.warn("Reservation cancellation failed - already cancelled: {}", reservationId);
             throw new RuntimeException("Reservation is already cancelled");
         }
 
         LocalDateTime classStartTime = reservation.getTrainingClass().getStartTime();
         if (classStartTime.isBefore(LocalDateTime.now())) {
+            log.warn("Reservation cancellation failed - class already started: {}", classStartTime);
             throw new RuntimeException("Cannot cancel a reservation for a class that has already started");
         }
 
         Duration duration = Duration.between(LocalDateTime.now(), classStartTime);
         if (duration.toHours() < 2) {
+            log.warn("Reservation cancellation failed - less than 2 hours before class: {} hours", duration.toHours());
             throw new RuntimeException("Reservations can only be cancelled at least 2 hours before the class starts");
         }
 
         reservation.setStatus("CANCELLED");
         reservationRepository.save(reservation);
+        log.info("Reservation cancelled successfully - id: {}, user: {}", reservationId, userEmail);
     }
 
     @Transactional
     public void rateClass(String userEmail, Long reservationId, RatingRequest request) {
+        log.info("Rating class - user: {}, reservationId: {}, rating: {}", userEmail, reservationId, request.getRating());
+
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -113,15 +129,18 @@ public class ReservationService {
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
         if (!reservation.getUser().getId().equals(user.getId())) {
+            log.warn("Rating failed - user mismatch: {} vs {}", userEmail, reservation.getUser().getEmail());
             throw new RuntimeException("You can only rate your own reservations");
         }
 
         LocalDateTime classEndTime = reservation.getTrainingClass().getEndTime();
         if (classEndTime.isAfter(LocalDateTime.now())) {
+            log.warn("Rating failed - class not finished yet: {}", classEndTime);
             throw new RuntimeException("You can only rate classes that have already finished");
         }
 
         if (!"CONFIRMED".equals(reservation.getStatus())) {
+            log.warn("Rating failed - reservation not confirmed: {}", reservation.getStatus());
             throw new RuntimeException("You can only rate classes you attended");
         }
 
@@ -130,6 +149,7 @@ public class ReservationService {
         reservationRepository.save(reservation);
 
         updateClassAverageRating(reservation.getTrainingClass().getId());
+        log.info("Class rated successfully - reservationId: {}, rating: {}", reservationId, request.getRating());
     }
 
     public List<ReservationDTO> getMyReservations(String userEmail) {
@@ -162,6 +182,8 @@ public class ReservationService {
     }
 
     private void updateClassAverageRating(Long classId) {
+        log.debug("Updating average rating for class: {}", classId);
+
         TrainingClass trainingClass = trainingClassRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Training class not found"));
 
@@ -176,6 +198,7 @@ public class ReservationService {
                     .orElse(0.0);
             trainingClass.setAverageRating(average);
             trainingClassRepository.save(trainingClass);
+            log.debug("Average rating updated for class: {} - new rating: {}", classId, average);
         }
     }
 }

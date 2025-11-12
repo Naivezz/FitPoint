@@ -8,6 +8,7 @@ import com.naivez.fithub.mapper.PersonalTrainingSessionMapper;
 import com.naivez.fithub.repository.PersonalTrainingSessionRepository;
 import com.naivez.fithub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -27,16 +29,21 @@ public class PersonalTrainingSessionService {
 
     @Transactional
     public PersonalTrainingSessionDTO createPersonalSession(String trainerEmail, PersonalTrainingSessionRequest request) {
+        log.info("Creating personal session - trainer: {}, clientId: {}, startTime: {}",
+                trainerEmail, request.getClientId(), request.getStartTime());
+
         User trainer = getTrainerByEmail(trainerEmail);
 
         User client = userRepository.findById(request.getClientId())
                 .orElseThrow(() -> new RuntimeException("Client not found"));
 
         if (request.getStartTime().isAfter(request.getEndTime())) {
+            log.warn("Session creation failed - start time after end time: {}", request.getStartTime());
             throw new RuntimeException("Start time must be before end time");
         }
 
         if (request.getStartTime().isBefore(LocalDateTime.now())) {
+            log.warn("Session creation failed - start time in past: {}", request.getStartTime());
             throw new RuntimeException("Cannot schedule session in the past");
         }
 
@@ -57,21 +64,28 @@ public class PersonalTrainingSessionService {
                 "New personal training session scheduled with " + trainer.getFirstName() + " " + trainer.getLastName() +
                         " on " + session.getStartTime());
 
+        log.info("Personal session created successfully - id: {}, trainer: {}, client: {}",
+                session.getId(), trainerEmail, client.getEmail());
+
         return personalTrainingSessionMapper.toDto(session);
     }
 
     @Transactional
     public PersonalTrainingSessionDTO updatePersonalSession(String trainerEmail, Long sessionId, PersonalTrainingSessionRequest request) {
+        log.info("Updating personal session - trainer: {}, sessionId: {}", trainerEmail, sessionId);
+
         User trainer = getTrainerByEmail(trainerEmail);
 
         PersonalTrainingSession session = personalTrainingSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
         if (!session.getTrainer().getId().equals(trainer.getId())) {
+            log.warn("Session update failed - trainer mismatch: {} vs {}", trainerEmail, session.getTrainer().getEmail());
             throw new RuntimeException("You can only update your own sessions");
         }
 
         if (request.getStartTime().isAfter(request.getEndTime())) {
+            log.warn("Session update failed - start time after end time: {}", request.getStartTime());
             throw new RuntimeException("Start time must be before end time");
         }
 
@@ -86,17 +100,22 @@ public class PersonalTrainingSessionService {
         notificationService.createNotification(session.getClient(),
                 "Personal training session updated for " + session.getStartTime());
 
+        log.info("Personal session updated successfully - id: {}, trainer: {}", sessionId, trainerEmail);
+
         return personalTrainingSessionMapper.toDto(session);
     }
 
     @Transactional
     public void cancelPersonalSession(String trainerEmail, Long sessionId) {
+        log.info("Canceling personal session - trainer: {}, sessionId: {}", trainerEmail, sessionId);
+
         User trainer = getTrainerByEmail(trainerEmail);
 
         PersonalTrainingSession session = personalTrainingSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
         if (!session.getTrainer().getId().equals(trainer.getId())) {
+            log.warn("Session cancellation failed - trainer mismatch: {} vs {}", trainerEmail, session.getTrainer().getEmail());
             throw new RuntimeException("You can only cancel your own sessions");
         }
 
@@ -106,16 +125,21 @@ public class PersonalTrainingSessionService {
 
         notificationService.createNotification(session.getClient(),
                 "Personal training session cancelled for " + session.getStartTime());
+
+        log.info("Personal session cancelled successfully - id: {}, trainer: {}", sessionId, trainerEmail);
     }
 
     @Transactional
     public PersonalTrainingSessionDTO completePersonalSession(String trainerEmail, Long sessionId, String sessionNotes) {
+        log.info("Completing personal session - trainer: {}, sessionId: {}", trainerEmail, sessionId);
+
         User trainer = getTrainerByEmail(trainerEmail);
 
         PersonalTrainingSession session = personalTrainingSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
         if (!session.getTrainer().getId().equals(trainer.getId())) {
+            log.warn("Session completion failed - trainer mismatch: {} vs {}", trainerEmail, session.getTrainer().getEmail());
             throw new RuntimeException("You can only complete your own sessions");
         }
 
@@ -126,6 +150,7 @@ public class PersonalTrainingSessionService {
         session.setUpdatedAt(LocalDateTime.now());
 
         session = personalTrainingSessionRepository.save(session);
+        log.info("Personal session completed successfully - id: {}, trainer: {}", sessionId, trainerEmail);
 
         return personalTrainingSessionMapper.toDto(session);
     }
@@ -175,6 +200,7 @@ public class PersonalTrainingSessionService {
                 .anyMatch(role -> "ROLE_TRAINER".equals(role.getName()));
 
         if (!isTrainer) {
+            log.warn("User is not a trainer: {}", email);
             throw new RuntimeException("User is not a trainer");
         }
 

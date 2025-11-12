@@ -35,7 +35,10 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        log.info("Attempting to register user with email: {}", request.getEmail());
+
         if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Registration failed - email already exists: {}", request.getEmail());
             throw new RuntimeException("Email already exists");
         }
 
@@ -48,7 +51,10 @@ public class AuthService {
                 .build();
 
         Role clientRole = roleRepository.findByName("ROLE_CLIENT")
-                .orElseThrow(() -> new RuntimeException("Default role not found"));
+                .orElseThrow(() -> {
+                    log.error("Default role ROLE_CLIENT not found in database");
+                    return new RuntimeException("Default role not found");
+                });
 
         user.setRoles(Collections.singleton(clientRole));
 
@@ -56,29 +62,36 @@ public class AuthService {
 
         String token = generateTokenForUser(user);
 
-        log.info("User {} registered successfully", user.getEmail());
+        log.info("User registered successfully - email: {}, userId: {}", user.getEmail(), user.getId());
 
         return buildAuthResponse(user, token);
     }
 
     public AuthResponse login(LoginRequest request) {
+        log.info("Login attempt for email: {}", request.getEmail());
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> {
+                    log.error("User not found after successful authentication: {}", request.getEmail());
+                    return new RuntimeException("User not found");
+                });
 
         String token = generateTokenForUser(user);
 
-        log.info("User {} logged in successfully", user.getEmail());
+        log.info("User logged in successfully - email: {}", user.getEmail());
 
         return buildAuthResponse(user, token);
     }
 
     private String generateTokenForUser(User user) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
-        return jwtUtil.generateToken(userDetails);
+        String token = jwtUtil.generateToken(userDetails);
+        log.debug("JWT token generated for user: {}", user.getEmail());
+        return token;
     }
 
     private AuthResponse buildAuthResponse(User user, String token) {

@@ -5,6 +5,7 @@ import com.naivez.fithub.entity.*;
 import com.naivez.fithub.mapper.*;
 import com.naivez.fithub.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -41,9 +43,12 @@ public class TrainerService {
 
     @Transactional
     public ScheduleChangeRequestDTO createScheduleChangeRequest(String trainerEmail, ScheduleChangeRequestRequest request) {
+        log.info("Creating schedule change request - trainer: {}, type: {}", trainerEmail, request.getRequestType());
+
         User trainer = getTrainerByEmail(trainerEmail);
 
         if (!List.of("ADD", "MODIFY", "CANCEL").contains(request.getRequestType())) {
+            log.warn("Schedule change request failed - invalid type: {}", request.getRequestType());
             throw new RuntimeException("Invalid request type. Must be ADD, MODIFY, or CANCEL");
         }
 
@@ -60,6 +65,8 @@ public class TrainerService {
                     .orElseThrow(() -> new RuntimeException("Training class not found"));
 
             if (!trainingClass.getTrainer().getId().equals(trainer.getId())) {
+                log.warn("Schedule change request failed - trainer mismatch: {} vs {}",
+                        trainerEmail, trainingClass.getTrainer().getEmail());
                 throw new RuntimeException("You can only modify or cancel your own classes");
             }
 
@@ -82,6 +89,8 @@ public class TrainerService {
 
         ScheduleChangeRequest scheduleChangeRequest = builder.build();
         scheduleChangeRequest = scheduleChangeRequestRepository.save(scheduleChangeRequest);
+        log.info("Schedule change request created successfully - id: {}, trainer: {}, type: {}",
+                scheduleChangeRequest.getId(), trainerEmail, request.getRequestType());
 
         return scheduleChangeRequestMapper.toDto(scheduleChangeRequest);
     }
@@ -126,12 +135,15 @@ public class TrainerService {
     }
 
     public ClientProfileDTO getClientProfile(String trainerEmail, Long clientId) {
+        log.debug("Getting client profile - trainer: {}, clientId: {}", trainerEmail, clientId);
+
         User trainer = getTrainerByEmail(trainerEmail);
 
         User client = userRepository.findById(clientId)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
 
         if (!hasAccessToClient(trainer.getId(), clientId)) {
+            log.warn("Access denied to client profile - trainer: {}, clientId: {}", trainerEmail, clientId);
             throw new RuntimeException("You don't have access to this client's profile");
         }
 
@@ -140,12 +152,15 @@ public class TrainerService {
 
     @Transactional
     public TrainerNoteDTO addClientNote(String trainerEmail, TrainerNoteRequest request) {
+        log.info("Adding client note - trainer: {}, clientId: {}", trainerEmail, request.getClientId());
+
         User trainer = getTrainerByEmail(trainerEmail);
 
         User client = userRepository.findById(request.getClientId())
                 .orElseThrow(() -> new RuntimeException("Client not found"));
 
         if (!hasAccessToClient(trainer.getId(), request.getClientId())) {
+            log.warn("Note addition failed - no access to client: trainer {}, clientId {}", trainerEmail, request.getClientId());
             throw new RuntimeException("You don't have access to this client");
         }
 
@@ -157,18 +172,23 @@ public class TrainerService {
                 .build();
 
         note = trainerNoteRepository.save(note);
+        log.info("Client note added successfully - id: {}, trainer: {}, clientId: {}",
+                note.getId(), trainerEmail, request.getClientId());
 
         return trainerNoteMapper.toDto(note);
     }
 
     @Transactional
     public TrainerNoteDTO updateClientNote(String trainerEmail, Long noteId, TrainerNoteRequest request) {
+        log.info("Updating client note - trainer: {}, noteId: {}", trainerEmail, noteId);
+
         User trainer = getTrainerByEmail(trainerEmail);
 
         TrainerNote note = trainerNoteRepository.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("Note not found"));
 
         if (!note.getTrainer().getId().equals(trainer.getId())) {
+            log.warn("Note update failed - trainer mismatch: {} vs {}", trainerEmail, note.getTrainer().getEmail());
             throw new RuntimeException("You can only update your own notes");
         }
 
@@ -176,25 +196,31 @@ public class TrainerService {
         note.setUpdatedAt(LocalDateTime.now());
 
         note = trainerNoteRepository.save(note);
+        log.info("Client note updated successfully - id: {}, trainer: {}", noteId, trainerEmail);
 
         return trainerNoteMapper.toDto(note);
     }
 
     @Transactional
     public void deleteClientNote(String trainerEmail, Long noteId) {
+        log.info("Deleting client note - trainer: {}, noteId: {}", trainerEmail, noteId);
+
         User trainer = getTrainerByEmail(trainerEmail);
 
         TrainerNote note = trainerNoteRepository.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("Note not found"));
 
         if (!note.getTrainer().getId().equals(trainer.getId())) {
+            log.warn("Note deletion failed - trainer mismatch: {} vs {}", trainerEmail, note.getTrainer().getEmail());
             throw new RuntimeException("You can only delete your own notes");
         }
 
         trainerNoteRepository.delete(note);
+        log.info("Client note deleted successfully - id: {}, trainer: {}", noteId, trainerEmail);
     }
 
     public List<TrainerNoteDTO> getAllNotes(String trainerEmail) {
+
         User trainer = getTrainerByEmail(trainerEmail);
 
         List<TrainerNote> notes = trainerNoteRepository.findByTrainerId(trainer.getId());
@@ -205,9 +231,12 @@ public class TrainerService {
     }
 
     public List<TrainerNoteDTO> getClientNotes(String trainerEmail, Long clientId) {
+        log.debug("Getting client notes - trainer: {}, clientId: {}", trainerEmail, clientId);
+
         User trainer = getTrainerByEmail(trainerEmail);
 
         if (!hasAccessToClient(trainer.getId(), clientId)) {
+            log.warn("Access denied to client notes - trainer: {}, clientId: {}", trainerEmail, clientId);
             throw new RuntimeException("You don't have access to this client");
         }
 
@@ -219,12 +248,16 @@ public class TrainerService {
     }
 
     public List<UserProfileDTO> getClassRegistrations(String trainerEmail, Long classId) {
+        log.debug("Getting class registrations - trainer: {}, classId: {}", trainerEmail, classId);
+
         User trainer = getTrainerByEmail(trainerEmail);
 
         TrainingClass trainingClass = trainingClassRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Training class not found"));
 
         if (!trainingClass.getTrainer().getId().equals(trainer.getId())) {
+            log.warn("Access denied to class registrations - trainer: {}, class trainer: {}",
+                    trainerEmail, trainingClass.getTrainer().getEmail());
             throw new RuntimeException("You can only view registrations for your own classes");
         }
 
@@ -243,6 +276,7 @@ public class TrainerService {
                 .anyMatch(role -> "ROLE_TRAINER".equals(role.getName()));
 
         if (!isTrainer) {
+            log.warn("User is not a trainer: {}", email);
             throw new RuntimeException("User is not a trainer");
         }
 

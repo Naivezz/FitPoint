@@ -10,6 +10,7 @@ import com.naivez.fithub.repository.ScheduleChangeRequestRepository;
 import com.naivez.fithub.repository.TrainingClassRepository;
 import com.naivez.fithub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -49,10 +51,15 @@ public class ScheduleChangeRequestService {
     @Transactional
     public ScheduleChangeRequestDTO reviewScheduleChangeRequest(Long id, String adminEmail,
                                                                 ReviewScheduleChangeRequest reviewRequest) {
+        log.info("Reviewing schedule change request - id: {}, admin: {}, status: {}",
+                id, adminEmail, reviewRequest.getStatus());
+
         ScheduleChangeRequest request = scheduleChangeRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Schedule change request not found with id: " + id));
 
         if (!"PENDING".equals(request.getStatus())) {
+            log.warn("Schedule change review failed - request already reviewed: {}, current status: {}",
+                    id, request.getStatus());
             throw new RuntimeException("Request has already been reviewed");
         }
 
@@ -61,6 +68,7 @@ public class ScheduleChangeRequestService {
 
         String status = reviewRequest.getStatus().toUpperCase();
         if (!"APPROVED".equals(status) && !"REJECTED".equals(status)) {
+            log.warn("Schedule change review failed - invalid status: {}", status);
             throw new RuntimeException("Status must be APPROVED or REJECTED");
         }
 
@@ -70,10 +78,14 @@ public class ScheduleChangeRequestService {
         request.setReviewNote(reviewRequest.getReviewNote());
 
         if ("APPROVED".equals(status)) {
+            log.info("Applying approved schedule change - requestId: {}, type: {}", id, request.getRequestType());
             applyScheduleChangeRequest(request);
         }
 
         request = scheduleChangeRequestRepository.save(request);
+        log.info("Schedule change request reviewed successfully - id: {}, status: {}, admin: {}",
+                id, status, adminEmail);
+
         return scheduleChangeRequestMapper.toDto(request);
     }
 
@@ -82,6 +94,8 @@ public class ScheduleChangeRequestService {
 
         if ("CANCEL".equals(requestType)) {
             if (request.getTrainingClass() != null) {
+                log.info("Canceling training class - classId: {}, requestId: {}",
+                        request.getTrainingClass().getId(), request.getId());
                 trainingClassRepository.deleteById(request.getTrainingClass().getId());
             }
         } else if ("MODIFY".equals(requestType)) {
@@ -108,6 +122,9 @@ public class ScheduleChangeRequestService {
                 trainingClassRepository.save(trainingClass);
             }
         } else if ("ADD".equals(requestType)) {
+            log.info("Adding new training class - requestId: {}, name: {}, trainer: {}",
+                    request.getId(), request.getClassName(), request.getTrainer().getEmail());
+
             TrainingClass newClass = TrainingClass.builder()
                     .name(request.getClassName())
                     .description(request.getClassDescription())

@@ -7,6 +7,7 @@ import com.naivez.fithub.mapper.NotificationMapper;
 import com.naivez.fithub.repository.NotificationRepository;
 import com.naivez.fithub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -47,6 +49,8 @@ public class NotificationService {
 
     @Transactional
     public void markAsRead(String userEmail, Long notificationId) {
+        log.debug("Marking notification as read - user: {}, notificationId: {}", userEmail, notificationId);
+
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -54,15 +58,19 @@ public class NotificationService {
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
 
         if (!notification.getRecipient().getId().equals(user.getId())) {
+            log.warn("Attempt to mark foreign notification as read - user: {}, notificationId: {}",
+                    userEmail, notificationId);
             throw new RuntimeException("You can only mark your own notifications as read");
         }
 
         notification.setRead(true);
         notificationRepository.save(notification);
+        log.debug("Notification marked as read - user: {}, notificationId: {}", userEmail, notificationId);
     }
 
     @Transactional
     public void markAllAsRead(String userEmail) {
+        log.debug("Marking all notifications as read for user: {}", userEmail);
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -70,10 +78,13 @@ public class NotificationService {
 
         unreadNotifications.forEach(n -> n.setRead(true));
         notificationRepository.saveAll(unreadNotifications);
+        log.debug("All notifications marked as read for user: {}", userEmail);
     }
 
     @Transactional
     public void createNotification(User recipient, String message) {
+        log.debug("Creating notification for user: {}", recipient.getEmail());
+
         Notification notification = Notification.builder()
                 .recipient(recipient)
                 .message(message)

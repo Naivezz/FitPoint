@@ -8,6 +8,7 @@ import com.naivez.fithub.mapper.UserMapper;
 import com.naivez.fithub.repository.RoleRepository;
 import com.naivez.fithub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -44,7 +46,10 @@ public class EmployeeService {
 
     @Transactional
     public EmployeeDTO createEmployee(CreateEmployeeRequest request) {
+        log.info("Creating new employee - email: {}", request.getEmail());
+
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            log.warn("Employee creation failed - email already exists: {}", request.getEmail());
             throw new RuntimeException("User with email " + request.getEmail() + " already exists");
         }
 
@@ -52,7 +57,10 @@ public class EmployeeService {
         for (String roleName : request.getRoles()) {
             String fullRoleName = roleName.startsWith("ROLE_") ? roleName : "ROLE_" + roleName.toUpperCase();
             Role role = roleRepository.findByName(fullRoleName)
-                    .orElseThrow(() -> new RuntimeException("Role not found: " + fullRoleName));
+                    .orElseThrow(() -> {
+                        log.error("Role not found in database: {}", fullRoleName);
+                        return new RuntimeException("Role not found: " + fullRoleName);
+                    });
             roles.add(role);
         }
 
@@ -69,11 +77,16 @@ public class EmployeeService {
                 .build();
 
         user = userRepository.save(user);
+        log.info("Employee created successfully - id: {}, email: {}",
+                user.getId(), user.getEmail());
+
         return userMapper.toEmployeeDTO(user);
     }
 
     @Transactional
     public void deleteEmployee(Long id) {
+        log.info("Deleting employee - id: {}", id);
+
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employee not found with id: " + id));
 
@@ -82,9 +95,12 @@ public class EmployeeService {
                         "ROLE_ADMIN".equals(role.getName()));
 
         if (!isEmployee) {
+            log.warn("Employee deletion failed - user is not an employee: {}", user.getEmail());
             throw new RuntimeException("User is not an employee");
         }
 
         userRepository.deleteById(id);
+
+        log.info("Employee deleted successfully - id: {}, email: {}", id, user.getEmail());
     }
 }
