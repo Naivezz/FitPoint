@@ -4,6 +4,8 @@ import com.naivez.fithub.dto.MembershipDTO;
 import com.naivez.fithub.dto.PurchaseMembershipRequest;
 import com.naivez.fithub.entity.Membership;
 import com.naivez.fithub.entity.User;
+import com.naivez.fithub.exception.InvalidRequestDataException;
+import com.naivez.fithub.exception.UserNotFoundException;
 import com.naivez.fithub.mapper.MembershipMapper;
 import com.naivez.fithub.repository.MembershipRepository;
 import com.naivez.fithub.repository.UserRepository;
@@ -39,7 +41,7 @@ public class MembershipService {
 
     public List<MembershipDTO> getUserMemberships(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
 
         List<Membership> memberships = membershipRepository.findByUserIdOrderByEndDateDesc(user.getId());
 
@@ -50,7 +52,7 @@ public class MembershipService {
 
     public List<MembershipDTO> getActiveMemberships(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
 
         LocalDate today = LocalDate.now();
         List<Membership> memberships = membershipRepository.findActiveByUserId(user.getId(), today);
@@ -65,12 +67,12 @@ public class MembershipService {
         log.info("Purchasing membership for user: {}, type: {}", userEmail, request.getType());
 
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
 
         String type = request.getType().toUpperCase();
         if (!MEMBERSHIP_TYPES.containsKey(type)) {
             log.warn("Membership purchase failed - invalid type: {} for user: {}", type, userEmail);
-            throw new RuntimeException("Invalid membership type. Valid types: MONTHLY, QUARTERLY, ANNUAL");
+            throw new InvalidRequestDataException("Invalid membership type. Valid types: MONTHLY, QUARTERLY, ANNUAL");
         }
 
         MembershipConfig config = MEMBERSHIP_TYPES.get(type);
@@ -98,12 +100,12 @@ public class MembershipService {
         log.info("Topping up membership for user: {}, type: {}", userEmail, request.getType());
 
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
 
         String type = request.getType().toUpperCase();
         if (!MEMBERSHIP_TYPES.containsKey(type)) {
             log.warn("Membership top-up failed - invalid type: {} for user: {}", type, userEmail);
-            throw new RuntimeException("Invalid membership type. Valid types: MONTHLY, QUARTERLY, ANNUAL");
+            throw new InvalidRequestDataException("Invalid membership type. Valid types: MONTHLY, QUARTERLY, ANNUAL");
         }
 
         MembershipConfig config = MEMBERSHIP_TYPES.get(type);
@@ -129,7 +131,7 @@ public class MembershipService {
 
     public boolean hasActiveMembership(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
 
         LocalDate today = LocalDate.now();
         List<Membership> activeMemberships = membershipRepository.findActiveByUserId(user.getId(), today);

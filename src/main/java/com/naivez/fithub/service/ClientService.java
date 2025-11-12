@@ -4,6 +4,9 @@ import com.naivez.fithub.dto.ChangePasswordRequest;
 import com.naivez.fithub.dto.UpdateProfileRequest;
 import com.naivez.fithub.dto.UserProfileDTO;
 import com.naivez.fithub.entity.User;
+import com.naivez.fithub.exception.EmailAlreadyExistsException;
+import com.naivez.fithub.exception.IncorrectPasswordException;
+import com.naivez.fithub.exception.UserNotFoundException;
 import com.naivez.fithub.mapper.UserMapper;
 import com.naivez.fithub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +27,7 @@ public class ClientService {
 
     public UserProfileDTO getProfile(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
 
         return userMapper.toDto(user);
     }
@@ -34,12 +37,12 @@ public class ClientService {
         log.info("Updating profile for user: {}", userEmail);
 
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
 
         if (!request.getEmail().equals(user.getEmail()) &&
                 userRepository.existsByEmail(request.getEmail())) {
             log.warn("Profile update failed - email already in use: {}", request.getEmail());
-            throw new RuntimeException("Email is already in use");
+            throw new EmailAlreadyExistsException("Email is already in use");
         }
 
         user.setFirstName(request.getFirstName());
@@ -58,16 +61,16 @@ public class ClientService {
         log.info("Changing password for user: {}", userEmail);
 
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
 
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
             log.warn("Password change failed - incorrect old password for user: {}", userEmail);
-            throw new RuntimeException("Old password is incorrect");
+            throw new IncorrectPasswordException("Old password is incorrect");
         }
 
         if (request.getOldPassword().equals(request.getNewPassword())) {
             log.warn("Password change failed - new password same as old password for user: {}", userEmail);
-            throw new RuntimeException("New password must be different from old password");
+            throw new IncorrectPasswordException("New password must be different from old password");
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));

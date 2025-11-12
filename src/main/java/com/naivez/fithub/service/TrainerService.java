@@ -2,16 +2,19 @@ package com.naivez.fithub.service;
 
 import com.naivez.fithub.dto.*;
 import com.naivez.fithub.entity.*;
-import com.naivez.fithub.mapper.*;
+import com.naivez.fithub.exception.*;
+import com.naivez.fithub.mapper.ScheduleChangeRequestMapper;
+import com.naivez.fithub.mapper.TrainerNoteMapper;
+import com.naivez.fithub.mapper.UserMapper;
 import com.naivez.fithub.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,7 +52,7 @@ public class TrainerService {
 
         if (!List.of("ADD", "MODIFY", "CANCEL").contains(request.getRequestType())) {
             log.warn("Schedule change request failed - invalid type: {}", request.getRequestType());
-            throw new RuntimeException("Invalid request type. Must be ADD, MODIFY, or CANCEL");
+            throw new InvalidRequestDataException("Invalid request type. Must be ADD, MODIFY, or CANCEL");
         }
 
         ScheduleChangeRequest.ScheduleChangeRequestBuilder builder = ScheduleChangeRequest.builder()
@@ -62,12 +65,12 @@ public class TrainerService {
         if (("MODIFY".equals(request.getRequestType()) || "CANCEL".equals(request.getRequestType()))
                 && request.getTrainingClassId() != null) {
             TrainingClass trainingClass = trainingClassRepository.findById(request.getTrainingClassId())
-                    .orElseThrow(() -> new RuntimeException("Training class not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("Training class not found"));
 
             if (!trainingClass.getTrainer().getId().equals(trainer.getId())) {
                 log.warn("Schedule change request failed - trainer mismatch: {} vs {}",
                         trainerEmail, trainingClass.getTrainer().getEmail());
-                throw new RuntimeException("You can only modify or cancel your own classes");
+                throw new UnauthorizedActionException("You can only modify or cancel your own classes");
             }
 
             builder.trainingClass(trainingClass);
@@ -82,7 +85,7 @@ public class TrainerService {
 
             if (request.getRequestedRoomId() != null) {
                 Room room = roomRepository.findById(request.getRequestedRoomId())
-                        .orElseThrow(() -> new RuntimeException("Room not found"));
+                        .orElseThrow(() -> new EntityNotFoundException("Room not found"));
                 builder.requestedRoom(room);
             }
         }
@@ -140,11 +143,11 @@ public class TrainerService {
         User trainer = getTrainerByEmail(trainerEmail);
 
         User client = userRepository.findById(clientId)
-                .orElseThrow(() -> new RuntimeException("Client not found"));
+                .orElseThrow(() -> new UserNotFoundException("Client not found with id: " + clientId));
 
         if (!hasAccessToClient(trainer.getId(), clientId)) {
             log.warn("Access denied to client profile - trainer: {}, clientId: {}", trainerEmail, clientId);
-            throw new RuntimeException("You don't have access to this client's profile");
+            throw new UnauthorizedActionException("You don't have access to this client's profile");
         }
 
         return userMapper.toClientProfileDTO(client);
@@ -157,11 +160,11 @@ public class TrainerService {
         User trainer = getTrainerByEmail(trainerEmail);
 
         User client = userRepository.findById(request.getClientId())
-                .orElseThrow(() -> new RuntimeException("Client not found"));
+                .orElseThrow(() -> new UserNotFoundException("Client not found with id: " + request.getClientId()));
 
         if (!hasAccessToClient(trainer.getId(), request.getClientId())) {
             log.warn("Note addition failed - no access to client: trainer {}, clientId {}", trainerEmail, request.getClientId());
-            throw new RuntimeException("You don't have access to this client");
+            throw new UnauthorizedActionException("You don't have access to this client");
         }
 
         TrainerNote note = TrainerNote.builder()
@@ -185,11 +188,11 @@ public class TrainerService {
         User trainer = getTrainerByEmail(trainerEmail);
 
         TrainerNote note = trainerNoteRepository.findById(noteId)
-                .orElseThrow(() -> new RuntimeException("Note not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Note not found"));
 
         if (!note.getTrainer().getId().equals(trainer.getId())) {
             log.warn("Note update failed - trainer mismatch: {} vs {}", trainerEmail, note.getTrainer().getEmail());
-            throw new RuntimeException("You can only update your own notes");
+            throw new UnauthorizedActionException("You can only update your own notes");
         }
 
         note.setNote(request.getNote());
@@ -208,11 +211,11 @@ public class TrainerService {
         User trainer = getTrainerByEmail(trainerEmail);
 
         TrainerNote note = trainerNoteRepository.findById(noteId)
-                .orElseThrow(() -> new RuntimeException("Note not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Note not found"));
 
         if (!note.getTrainer().getId().equals(trainer.getId())) {
             log.warn("Note deletion failed - trainer mismatch: {} vs {}", trainerEmail, note.getTrainer().getEmail());
-            throw new RuntimeException("You can only delete your own notes");
+            throw new UnauthorizedActionException("You can only delete your own notes");
         }
 
         trainerNoteRepository.delete(note);
@@ -237,7 +240,7 @@ public class TrainerService {
 
         if (!hasAccessToClient(trainer.getId(), clientId)) {
             log.warn("Access denied to client notes - trainer: {}, clientId: {}", trainerEmail, clientId);
-            throw new RuntimeException("You don't have access to this client");
+            throw new UnauthorizedActionException("You don't have access to this client");
         }
 
         List<TrainerNote> notes = trainerNoteRepository.findByTrainerIdAndClientId(trainer.getId(), clientId);
@@ -253,12 +256,12 @@ public class TrainerService {
         User trainer = getTrainerByEmail(trainerEmail);
 
         TrainingClass trainingClass = trainingClassRepository.findById(classId)
-                .orElseThrow(() -> new RuntimeException("Training class not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("Training class not found"));
 
         if (!trainingClass.getTrainer().getId().equals(trainer.getId())) {
             log.warn("Access denied to class registrations - trainer: {}, class trainer: {}",
                     trainerEmail, trainingClass.getTrainer().getEmail());
-            throw new RuntimeException("You can only view registrations for your own classes");
+            throw new UnauthorizedActionException("You can only view registrations for your own classes");
         }
 
         return trainingClass.getReservations().stream()
@@ -270,14 +273,14 @@ public class TrainerService {
 
     private User getTrainerByEmail(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 
         boolean isTrainer = user.getRoles().stream()
                 .anyMatch(role -> "ROLE_TRAINER".equals(role.getName()));
 
         if (!isTrainer) {
             log.warn("User is not a trainer: {}", email);
-            throw new RuntimeException("User is not a trainer");
+            throw new UserNotTrainerException("User is not a trainer");
         }
 
         return user;

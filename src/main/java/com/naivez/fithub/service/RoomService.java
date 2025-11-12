@@ -3,6 +3,7 @@ package com.naivez.fithub.service;
 import com.naivez.fithub.dto.RoomDTO;
 import com.naivez.fithub.dto.RoomRequest;
 import com.naivez.fithub.entity.Room;
+import com.naivez.fithub.exception.EntityNotFoundException;
 import com.naivez.fithub.mapper.RoomMapper;
 import com.naivez.fithub.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class RoomService {
 
     public RoomDTO getRoomById(Long id) {
         Room room = roomRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Room not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Room not found with id: " + id));
         return roomMapper.toDto(room);
     }
 
@@ -59,7 +60,7 @@ public class RoomService {
         log.info("Updating room - id: {}, new name: {}", id, request.getName());
 
         Room room = roomRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Room not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Room not found with id: " + id));
 
         roomMapper.updateFromRequest(request, room);
 
@@ -74,7 +75,7 @@ public class RoomService {
         log.info("Deleting room - id: {}", id);
 
         if (!roomRepository.existsById(id)) {
-            throw new RuntimeException("Room not found with id: " + id);
+            throw new EntityNotFoundException("Room not found with id: " + id);
         }
         roomRepository.deleteById(id);
         log.info("Room deleted successfully - id: {}", id);

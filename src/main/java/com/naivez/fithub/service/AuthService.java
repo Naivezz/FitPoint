@@ -5,6 +5,9 @@ import com.naivez.fithub.dto.LoginRequest;
 import com.naivez.fithub.dto.RegisterRequest;
 import com.naivez.fithub.entity.Role;
 import com.naivez.fithub.entity.User;
+import com.naivez.fithub.exception.EmailAlreadyExistsException;
+import com.naivez.fithub.exception.EntityNotFoundException;
+import com.naivez.fithub.exception.UserNotFoundException;
 import com.naivez.fithub.repository.RoleRepository;
 import com.naivez.fithub.repository.UserRepository;
 import com.naivez.fithub.security.JwtUtil;
@@ -39,7 +42,7 @@ public class AuthService {
 
         if (userRepository.existsByEmail(request.getEmail())) {
             log.warn("Registration failed - email already exists: {}", request.getEmail());
-            throw new RuntimeException("Email already exists");
+            throw new EmailAlreadyExistsException("Email already exists");
         }
 
         User user = User.builder()
@@ -53,7 +56,7 @@ public class AuthService {
         Role clientRole = roleRepository.findByName("ROLE_CLIENT")
                 .orElseThrow(() -> {
                     log.error("Default role ROLE_CLIENT not found in database");
-                    return new RuntimeException("Default role not found");
+                    return new EntityNotFoundException("Default role not found");
                 });
 
         user.setRoles(Collections.singleton(clientRole));
@@ -77,7 +80,7 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> {
                     log.error("User not found after successful authentication: {}", request.getEmail());
-                    return new RuntimeException("User not found");
+                    return new UserNotFoundException("User not found with email: " + request.getEmail());
                 });
 
         String token = generateTokenForUser(user);

@@ -4,6 +4,7 @@ import com.naivez.fithub.dto.PersonalTrainingSessionDTO;
 import com.naivez.fithub.dto.PersonalTrainingSessionRequest;
 import com.naivez.fithub.entity.PersonalTrainingSession;
 import com.naivez.fithub.entity.User;
+import com.naivez.fithub.exception.*;
 import com.naivez.fithub.mapper.PersonalTrainingSessionMapper;
 import com.naivez.fithub.repository.PersonalTrainingSessionRepository;
 import com.naivez.fithub.repository.UserRepository;
@@ -35,16 +36,16 @@ public class PersonalTrainingSessionService {
         User trainer = getTrainerByEmail(trainerEmail);
 
         User client = userRepository.findById(request.getClientId())
-                .orElseThrow(() -> new RuntimeException("Client not found"));
+                .orElseThrow(() -> new UserNotFoundException("Client not found with id: " + request.getClientId()));
 
         if (request.getStartTime().isAfter(request.getEndTime())) {
             log.warn("Session creation failed - start time after end time: {}", request.getStartTime());
-            throw new RuntimeException("Start time must be before end time");
+            throw new InvalidTimeRangeException("Start time must be before end time");
         }
 
         if (request.getStartTime().isBefore(LocalDateTime.now())) {
             log.warn("Session creation failed - start time in past: {}", request.getStartTime());
-            throw new RuntimeException("Cannot schedule session in the past");
+            throw new SessionAlreadyStartedException("Cannot schedule session in the past");
         }
 
         PersonalTrainingSession session = PersonalTrainingSession.builder()
@@ -77,16 +78,16 @@ public class PersonalTrainingSessionService {
         User trainer = getTrainerByEmail(trainerEmail);
 
         PersonalTrainingSession session = personalTrainingSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Session not found"));
 
         if (!session.getTrainer().getId().equals(trainer.getId())) {
             log.warn("Session update failed - trainer mismatch: {} vs {}", trainerEmail, session.getTrainer().getEmail());
-            throw new RuntimeException("You can only update your own sessions");
+            throw new UnauthorizedActionException("You can only update your own sessions");
         }
 
         if (request.getStartTime().isAfter(request.getEndTime())) {
             log.warn("Session update failed - start time after end time: {}", request.getStartTime());
-            throw new RuntimeException("Start time must be before end time");
+            throw new InvalidTimeRangeException("Start time must be before end time");
         }
 
         session.setStartTime(request.getStartTime());
@@ -112,11 +113,11 @@ public class PersonalTrainingSessionService {
         User trainer = getTrainerByEmail(trainerEmail);
 
         PersonalTrainingSession session = personalTrainingSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Session not found"));
 
         if (!session.getTrainer().getId().equals(trainer.getId())) {
             log.warn("Session cancellation failed - trainer mismatch: {} vs {}", trainerEmail, session.getTrainer().getEmail());
-            throw new RuntimeException("You can only cancel your own sessions");
+            throw new UnauthorizedActionException("You can only cancel your own sessions");
         }
 
         session.setStatus("CANCELLED");
@@ -136,11 +137,11 @@ public class PersonalTrainingSessionService {
         User trainer = getTrainerByEmail(trainerEmail);
 
         PersonalTrainingSession session = personalTrainingSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Session not found"));
 
         if (!session.getTrainer().getId().equals(trainer.getId())) {
             log.warn("Session completion failed - trainer mismatch: {} vs {}", trainerEmail, session.getTrainer().getEmail());
-            throw new RuntimeException("You can only complete your own sessions");
+            throw new UnauthorizedActionException("You can only complete your own sessions");
         }
 
         session.setStatus("COMPLETED");
@@ -194,14 +195,14 @@ public class PersonalTrainingSessionService {
 
     private User getTrainerByEmail(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 
         boolean isTrainer = user.getRoles().stream()
                 .anyMatch(role -> "ROLE_TRAINER".equals(role.getName()));
 
         if (!isTrainer) {
             log.warn("User is not a trainer: {}", email);
-            throw new RuntimeException("User is not a trainer");
+            throw new UserNotTrainerException("User is not a trainer");
         }
 
         return user;

@@ -4,6 +4,10 @@ import com.naivez.fithub.dto.CreateEmployeeRequest;
 import com.naivez.fithub.dto.EmployeeDTO;
 import com.naivez.fithub.entity.Role;
 import com.naivez.fithub.entity.User;
+import com.naivez.fithub.exception.EmailAlreadyExistsException;
+import com.naivez.fithub.exception.EntityNotFoundException;
+import com.naivez.fithub.exception.UserNotEmployeeException;
+import com.naivez.fithub.exception.UserNotFoundException;
 import com.naivez.fithub.mapper.UserMapper;
 import com.naivez.fithub.repository.RoleRepository;
 import com.naivez.fithub.repository.UserRepository;
@@ -40,7 +44,7 @@ public class EmployeeService {
 
     public EmployeeDTO getEmployeeById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Employee not found with id: " + id));
+                .orElseThrow(() -> new UserNotFoundException("Employee not found with id: " + id));
         return userMapper.toEmployeeDTO(user);
     }
 
@@ -50,7 +54,7 @@ public class EmployeeService {
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             log.warn("Employee creation failed - email already exists: {}", request.getEmail());
-            throw new RuntimeException("User with email " + request.getEmail() + " already exists");
+            throw new EmailAlreadyExistsException("User with email " + request.getEmail() + " already exists");
         }
 
         Set<Role> roles = new HashSet<>();
@@ -59,7 +63,7 @@ public class EmployeeService {
             Role role = roleRepository.findByName(fullRoleName)
                     .orElseThrow(() -> {
                         log.error("Role not found in database: {}", fullRoleName);
-                        return new RuntimeException("Role not found: " + fullRoleName);
+                        return new EntityNotFoundException("Role not found: " + fullRoleName);
                     });
             roles.add(role);
         }
@@ -88,7 +92,7 @@ public class EmployeeService {
         log.info("Deleting employee - id: {}", id);
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Employee not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Employee not found with id: " + id));
 
         boolean isEmployee = user.getRoles().stream()
                 .anyMatch(role -> "ROLE_TRAINER".equals(role.getName()) ||
@@ -96,7 +100,7 @@ public class EmployeeService {
 
         if (!isEmployee) {
             log.warn("Employee deletion failed - user is not an employee: {}", user.getEmail());
-            throw new RuntimeException("User is not an employee");
+            throw new UserNotEmployeeException("User is not an employee");
         }
 
         userRepository.deleteById(id);

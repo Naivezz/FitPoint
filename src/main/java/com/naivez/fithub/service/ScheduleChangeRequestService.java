@@ -5,12 +5,16 @@ import com.naivez.fithub.dto.ScheduleChangeRequestDTO;
 import com.naivez.fithub.entity.ScheduleChangeRequest;
 import com.naivez.fithub.entity.TrainingClass;
 import com.naivez.fithub.entity.User;
+import com.naivez.fithub.exception.EntityNotFoundException;
+import com.naivez.fithub.exception.InvalidStatusException;
+import com.naivez.fithub.exception.RequestAlreadyReviewedException;
 import com.naivez.fithub.mapper.ScheduleChangeRequestMapper;
 import com.naivez.fithub.repository.ScheduleChangeRequestRepository;
 import com.naivez.fithub.repository.TrainingClassRepository;
 import com.naivez.fithub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +48,7 @@ public class ScheduleChangeRequestService {
 
     public ScheduleChangeRequestDTO getScheduleChangeRequestById(Long id) {
         ScheduleChangeRequest request = scheduleChangeRequestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Schedule change request not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Schedule change request not found with id: " + id));
         return scheduleChangeRequestMapper.toDto(request);
     }
 
@@ -55,21 +59,21 @@ public class ScheduleChangeRequestService {
                 id, adminEmail, reviewRequest.getStatus());
 
         ScheduleChangeRequest request = scheduleChangeRequestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Schedule change request not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Schedule change request not found with id: " + id));
 
         if (!"PENDING".equals(request.getStatus())) {
             log.warn("Schedule change review failed - request already reviewed: {}, current status: {}",
                     id, request.getStatus());
-            throw new RuntimeException("Request has already been reviewed");
+            throw new RequestAlreadyReviewedException("Request has already been reviewed");
         }
 
         User admin = userRepository.findByEmail(adminEmail)
-                .orElseThrow(() -> new RuntimeException("Admin user not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("Admin user not found"));
 
         String status = reviewRequest.getStatus().toUpperCase();
         if (!"APPROVED".equals(status) && !"REJECTED".equals(status)) {
             log.warn("Schedule change review failed - invalid status: {}", status);
-            throw new RuntimeException("Status must be APPROVED or REJECTED");
+            throw new InvalidStatusException("Status must be APPROVED or REJECTED");
         }
 
         request.setStatus(status);

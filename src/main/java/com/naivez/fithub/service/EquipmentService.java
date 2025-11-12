@@ -4,6 +4,7 @@ import com.naivez.fithub.dto.EquipmentDTO;
 import com.naivez.fithub.dto.EquipmentRequest;
 import com.naivez.fithub.entity.Equipment;
 import com.naivez.fithub.entity.Room;
+import com.naivez.fithub.exception.EntityNotFoundException;
 import com.naivez.fithub.mapper.EquipmentMapper;
 import com.naivez.fithub.repository.EquipmentRepository;
 import com.naivez.fithub.repository.RoomRepository;
@@ -45,7 +46,7 @@ public class EquipmentService {
 
     public EquipmentDTO getEquipmentById(Long id) {
         Equipment equipment = equipmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Equipment not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Equipment not found with id: " + id));
         return equipmentMapper.toDto(equipment);
     }
 
@@ -56,7 +57,7 @@ public class EquipmentService {
         Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> {
                     log.error("Room not found for equipment creation - roomId: {}", request.getRoomId());
-                    return new RuntimeException("Room not found with id: " + request.getRoomId());
+                    return new EntityNotFoundException("Room not found with id: " + request.getRoomId());
                 });
 
         Equipment equipment = equipmentMapper.toEntity(request);
@@ -74,12 +75,12 @@ public class EquipmentService {
         log.info("Updating equipment - id: {}, new roomId: {}", id, request.getRoomId());
 
         Equipment equipment = equipmentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Equipment not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Equipment not found with id: " + id));
 
         Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> {
                     log.error("Room not found for equipment update - roomId: {}", request.getRoomId());
-                    return new RuntimeException("Room not found with id: " + request.getRoomId());
+                    return new EntityNotFoundException("Room not found with id: " + request.getRoomId());
                 });
 
         equipmentMapper.updateFromRequest(request, equipment);
@@ -96,7 +97,7 @@ public class EquipmentService {
         log.info("Deleting equipment - id: {}", id);
 
         if (!equipmentRepository.existsById(id)) {
-            throw new RuntimeException("Equipment not found with id: " + id);
+            throw new EntityNotFoundException("Equipment not found with id: " + id);
         }
         equipmentRepository.deleteById(id);
         log.info("Equipment deleted successfully - id: {}", id);

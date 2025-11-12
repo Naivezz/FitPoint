@@ -3,6 +3,9 @@ package com.naivez.fithub.service;
 import com.naivez.fithub.dto.NotificationDTO;
 import com.naivez.fithub.entity.Notification;
 import com.naivez.fithub.entity.User;
+import com.naivez.fithub.exception.EntityNotFoundException;
+import com.naivez.fithub.exception.UnauthorizedActionException;
+import com.naivez.fithub.exception.UserNotFoundException;
 import com.naivez.fithub.mapper.NotificationMapper;
 import com.naivez.fithub.repository.NotificationRepository;
 import com.naivez.fithub.repository.UserRepository;
@@ -27,7 +30,7 @@ public class NotificationService {
 
     public List<NotificationDTO> getUserNotifications(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
 
         List<Notification> notifications = notificationRepository.findByRecipientId(user.getId());
 
@@ -38,7 +41,7 @@ public class NotificationService {
 
     public List<NotificationDTO> getUnreadNotifications(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
 
         List<Notification> notifications = notificationRepository.findUnreadByRecipientId(user.getId());
 
@@ -52,15 +55,15 @@ public class NotificationService {
         log.debug("Marking notification as read - user: {}, notificationId: {}", userEmail, notificationId);
 
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
 
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Notification not found"));
 
         if (!notification.getRecipient().getId().equals(user.getId())) {
             log.warn("Attempt to mark foreign notification as read - user: {}, notificationId: {}",
                     userEmail, notificationId);
-            throw new RuntimeException("You can only mark your own notifications as read");
+            throw new UnauthorizedActionException("You can only mark your own notifications as read");
         }
 
         notification.setRead(true);
@@ -72,7 +75,7 @@ public class NotificationService {
     public void markAllAsRead(String userEmail) {
         log.debug("Marking all notifications as read for user: {}", userEmail);
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
 
         List<Notification> unreadNotifications = notificationRepository.findUnreadByRecipientId(user.getId());
 
@@ -98,7 +101,7 @@ public class NotificationService {
     @Transactional
     public void createNotificationByUserId(Long recipientId, String message) {
         User recipient = userRepository.findById(recipientId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + recipientId));
 
         createNotification(recipient, message);
     }

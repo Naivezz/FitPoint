@@ -2,6 +2,7 @@ package com.naivez.fithub.service;
 
 import com.naivez.fithub.dto.ClientProfileDTO;
 import com.naivez.fithub.dto.MembershipTypeDTO;
+import com.naivez.fithub.exception.EntityNotFoundException;
 import com.naivez.fithub.mapper.UserMapper;
 import com.naivez.fithub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class ClientManagementService {
 
     public ClientProfileDTO getClientById(Long id) {
         com.naivez.fithub.entity.User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Client not found with id: " + id));
         return userMapper.toClientProfileDTO(user);
     }
 

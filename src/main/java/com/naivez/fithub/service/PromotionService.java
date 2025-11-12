@@ -3,6 +3,8 @@ package com.naivez.fithub.service;
 import com.naivez.fithub.dto.PromotionDTO;
 import com.naivez.fithub.dto.PromotionRequest;
 import com.naivez.fithub.entity.Promotion;
+import com.naivez.fithub.exception.EntityNotFoundException;
+import com.naivez.fithub.exception.InvalidTimeRangeException;
 import com.naivez.fithub.mapper.PromotionMapper;
 import com.naivez.fithub.repository.PromotionRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +39,7 @@ public class PromotionService {
 
     public PromotionDTO getPromotionById(Long id) {
         Promotion promotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Promotion not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Promotion not found with id: " + id));
         return promotionMapper.toDto(promotion);
     }
 
@@ -49,7 +51,7 @@ public class PromotionService {
         if (request.getEndDate().isBefore(request.getStartDate())) {
             log.warn("Promotion creation failed - end date before start date: {} to {}",
                     request.getStartDate(), request.getEndDate());
-            throw new RuntimeException("End date must be after start date");
+            throw new InvalidTimeRangeException("End date must be after start date");
         }
 
         Promotion promotion = promotionMapper.toEntity(request);
@@ -66,12 +68,12 @@ public class PromotionService {
         log.info("Updating promotion - id: {}, title: {}", id, request.getTitle());
 
         Promotion promotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Promotion not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Promotion not found with id: " + id));
 
         if (request.getEndDate().isBefore(request.getStartDate())) {
             log.warn("Promotion update failed - end date before start date: {} to {}",
                     request.getStartDate(), request.getEndDate());
-            throw new RuntimeException("End date must be after start date");
+            throw new InvalidTimeRangeException("End date must be after start date");
         }
 
         promotionMapper.updateFromRequest(request, promotion);
@@ -86,7 +88,7 @@ public class PromotionService {
         log.info("Deleting promotion - id: {}", id);
 
         if (!promotionRepository.existsById(id)) {
-            throw new RuntimeException("Promotion not found with id: " + id);
+            throw new EntityNotFoundException("Promotion not found with id: " + id);
         }
         promotionRepository.deleteById(id);
         log.info("Promotion deleted successfully - id: {}", id);

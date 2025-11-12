@@ -3,6 +3,8 @@ package com.naivez.fithub.service;
 import com.naivez.fithub.dto.CouponDTO;
 import com.naivez.fithub.dto.CouponRequest;
 import com.naivez.fithub.entity.Coupon;
+import com.naivez.fithub.exception.CouponAlreadyExistsException;
+import com.naivez.fithub.exception.EntityNotFoundException;
 import com.naivez.fithub.mapper.CouponMapper;
 import com.naivez.fithub.repository.CouponRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +32,7 @@ public class CouponService {
 
     public CouponDTO getCouponById(Long id) {
         Coupon coupon = couponRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Coupon not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Coupon not found with id: " + id));
         return couponMapper.toDto(coupon);
     }
 
@@ -40,7 +42,7 @@ public class CouponService {
 
         if (couponRepository.existsByCode(request.getCode())) {
             log.warn("Coupon creation failed - code already exists: {}", request.getCode());
-            throw new RuntimeException("Coupon with code " + request.getCode() + " already exists");
+            throw new CouponAlreadyExistsException("Coupon with code " + request.getCode() + " already exists");
         }
 
         Coupon coupon = couponMapper.toEntity(request);
@@ -55,12 +57,12 @@ public class CouponService {
         log.info("Updating coupon - id: {}, new code: {}", id, request.getCode());
 
         Coupon coupon = couponRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Coupon not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Coupon not found with id: " + id));
 
         if (!coupon.getCode().equals(request.getCode()) &&
                 couponRepository.existsByCode(request.getCode())) {
             log.warn("Coupon update failed - code already exists: {}", request.getCode());
-            throw new RuntimeException("Coupon with code " + request.getCode() + " already exists");
+            throw new CouponAlreadyExistsException("Coupon with code " + request.getCode() + " already exists");
         }
 
         couponMapper.updateFromRequest(request, coupon);
@@ -75,7 +77,7 @@ public class CouponService {
         log.info("Deleting coupon - id: {}", id);
 
         if (!couponRepository.existsById(id)) {
-            throw new RuntimeException("Coupon not found with id: " + id);
+            throw new EntityNotFoundException("Coupon not found with id: " + id);
         }
         couponRepository.deleteById(id);
         log.info("Coupon deleted successfully - id: {}", id);
@@ -85,7 +87,7 @@ public class CouponService {
     public CouponDTO deactivateCoupon(Long id) {
         log.info("Deactivating coupon - id: {}", id);
         Coupon coupon = couponRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Coupon not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Coupon not found with id: " + id));
 
         coupon.setActive(false);
         coupon = couponRepository.save(coupon);

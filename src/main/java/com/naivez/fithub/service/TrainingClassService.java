@@ -5,6 +5,10 @@ import com.naivez.fithub.dto.TrainingClassRequest;
 import com.naivez.fithub.entity.Room;
 import com.naivez.fithub.entity.TrainingClass;
 import com.naivez.fithub.entity.User;
+import com.naivez.fithub.exception.EntityNotFoundException;
+import com.naivez.fithub.exception.InvalidTimeRangeException;
+import com.naivez.fithub.exception.UserNotFoundException;
+import com.naivez.fithub.exception.UserNotTrainerException;
 import com.naivez.fithub.mapper.TrainingClassMapper;
 import com.naivez.fithub.repository.RoomRepository;
 import com.naivez.fithub.repository.TrainingClassRepository;
@@ -87,19 +91,19 @@ public class TrainingClassService {
         User trainer = userRepository.findById(request.getTrainerId())
                 .orElseThrow(() -> {
                     log.error("Trainer not found for class creation - trainerId: {}", request.getTrainerId());
-                    return new RuntimeException("Trainer not found with id: " + request.getTrainerId());
+                    return new UserNotFoundException("Trainer not found with id: " + request.getTrainerId());
                 });
 
         Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> {
                     log.error("Room not found for class creation - roomId: {}", request.getRoomId());
-                    return new RuntimeException("Room not found with id: " + request.getRoomId());
+                    return new EntityNotFoundException("Room not found with id: " + request.getRoomId());
                 });
 
         if (request.getEndTime().isBefore(request.getStartTime())) {
             log.warn("Class creation failed - end time before start time: {} to {}",
                     request.getStartTime(), request.getEndTime());
-            throw new RuntimeException("End time must be after start time");
+            throw new InvalidTimeRangeException("End time must be after start time");
         }
 
         TrainingClass trainingClass = trainingClassMapper.toEntity(request);
@@ -123,24 +127,24 @@ public class TrainingClassService {
                 id, request.getName(), request.getTrainerId());
 
         TrainingClass trainingClass = trainingClassRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Training class not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Training class not found with id: " + id));
 
         User trainer = userRepository.findById(request.getTrainerId())
                 .orElseThrow(() -> {
                     log.error("Trainer not found for class update - trainerId: {}", request.getTrainerId());
-                    return new RuntimeException("Trainer not found with id: " + request.getTrainerId());
+                    return new UserNotFoundException("Trainer not found with id: " + request.getTrainerId());
                 });
 
         Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> {
                     log.error("Room not found for class update - roomId: {}", request.getRoomId());
-                    return new RuntimeException("Room not found with id: " + request.getRoomId());
+                    return new EntityNotFoundException("Room not found with id: " + request.getRoomId());
                 });
 
         if (request.getEndTime().isBefore(request.getStartTime())) {
             log.warn("Class update failed - end time before start time: {} to {}",
                     request.getStartTime(), request.getEndTime());
-            throw new RuntimeException("End time must be after start time");
+            throw new InvalidTimeRangeException("End time must be after start time");
         }
 
         trainingClassMapper.updateFromRequest(request, trainingClass);
@@ -157,7 +161,7 @@ public class TrainingClassService {
     public void deleteTrainingClass(Long id) {
         log.info("Deleting training class - id: {}", id);
         if (!trainingClassRepository.existsById(id)) {
-            throw new RuntimeException("Training class not found with id: " + id);
+            throw new EntityNotFoundException("Training class not found with id: " + id);
         }
         trainingClassRepository.deleteById(id);
         log.info("Training class deleted successfully - id: {}", id);
@@ -166,14 +170,14 @@ public class TrainingClassService {
     private User getTrainerByEmail(String email) {
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 
         boolean isTrainer = user.getRoles().stream()
                 .anyMatch(role -> "ROLE_TRAINER".equals(role.getName()));
 
         if (!isTrainer) {
             log.warn("User is not a trainer: {}", email);
-            throw new RuntimeException("User is not a trainer");
+            throw new UserNotTrainerException("User is not a trainer");
         }
 
         return user;
