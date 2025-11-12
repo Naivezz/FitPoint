@@ -29,45 +29,29 @@ public class RoomController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TRAINER')")
     public ResponseEntity<RoomDTO> getRoomById(@PathVariable Long id) {
-        try {
-            RoomDTO room = roomService.getRoomById(id);
-            return ResponseEntity.ok(room);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        RoomDTO room = roomService.getRoomById(id);
+        return ResponseEntity.ok(room);
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RoomDTO> createRoom(@Valid @RequestBody RoomRequest request) {
-        try {
-            RoomDTO room = roomService.createRoom(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(room);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        RoomDTO room = roomService.createRoom(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(room);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RoomDTO> updateRoom(@PathVariable Long id,
                                               @Valid @RequestBody RoomRequest request) {
-        try {
-            RoomDTO room = roomService.updateRoom(id, request);
-            return ResponseEntity.ok(room);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        RoomDTO room = roomService.updateRoom(id, request);
+        return ResponseEntity.ok(room);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteRoom(@PathVariable Long id) {
-        try {
-            roomService.deleteRoom(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        roomService.deleteRoom(id);
+        return ResponseEntity.noContent().build();
     }
 }

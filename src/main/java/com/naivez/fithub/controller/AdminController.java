@@ -34,32 +34,20 @@ public class AdminController {
 
     @GetMapping("/employees/{id}")
     public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable Long id) {
-        try {
-            EmployeeDTO employee = employeeService.getEmployeeById(id);
-            return ResponseEntity.ok(employee);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        EmployeeDTO employee = employeeService.getEmployeeById(id);
+        return ResponseEntity.ok(employee);
     }
 
     @PostMapping("/employees")
     public ResponseEntity<EmployeeDTO> createEmployee(@Valid @RequestBody CreateEmployeeRequest request) {
-        try {
-            EmployeeDTO employee = employeeService.createEmployee(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(employee);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        EmployeeDTO employee = employeeService.createEmployee(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(employee);
     }
 
     @DeleteMapping("/employees/{id}")
     public ResponseEntity<Void> deleteEmployee(@PathVariable Long id) {
-        try {
-            employeeService.deleteEmployee(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        employeeService.deleteEmployee(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/schedule-change-requests")
@@ -76,12 +64,8 @@ public class AdminController {
 
     @GetMapping("/schedule-change-requests/{id}")
     public ResponseEntity<ScheduleChangeRequestDTO> getScheduleChangeRequestById(@PathVariable Long id) {
-        try {
-            ScheduleChangeRequestDTO request = scheduleChangeRequestService.getScheduleChangeRequestById(id);
-            return ResponseEntity.ok(request);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        ScheduleChangeRequestDTO request = scheduleChangeRequestService.getScheduleChangeRequestById(id);
+        return ResponseEntity.ok(request);
     }
 
     @PutMapping("/schedule-change-requests/{id}/review")
@@ -89,11 +73,7 @@ public class AdminController {
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long id,
             @Valid @RequestBody ReviewScheduleChangeRequest reviewRequest) {
-        try {
-            ScheduleChangeRequestDTO request = scheduleChangeRequestService.reviewScheduleChangeRequest(id, user.getUsername(), reviewRequest);
-            return ResponseEntity.ok(request);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        ScheduleChangeRequestDTO request = scheduleChangeRequestService.reviewScheduleChangeRequest(id, user.getUsername(), reviewRequest);
+        return ResponseEntity.ok(request);
     }
 }

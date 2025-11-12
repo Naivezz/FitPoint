@@ -36,45 +36,29 @@ public class PromotionController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PromotionDTO> getPromotionById(@PathVariable Long id) {
-        try {
-            PromotionDTO promotion = promotionService.getPromotionById(id);
-            return ResponseEntity.ok(promotion);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        PromotionDTO promotion = promotionService.getPromotionById(id);
+        return ResponseEntity.ok(promotion);
     }
     
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PromotionDTO> createPromotion(@Valid @RequestBody PromotionRequest request) {
-        try {
-            PromotionDTO promotion = promotionService.createPromotion(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(promotion);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        PromotionDTO promotion = promotionService.createPromotion(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(promotion);
     }
     
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PromotionDTO> updatePromotion(@PathVariable Long id, 
                                                         @Valid @RequestBody PromotionRequest request) {
-        try {
-            PromotionDTO promotion = promotionService.updatePromotion(id, request);
-            return ResponseEntity.ok(promotion);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        PromotionDTO promotion = promotionService.updatePromotion(id, request);
+        return ResponseEntity.ok(promotion);
     }
     
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletePromotion(@PathVariable Long id) {
-        try {
-            promotionService.deletePromotion(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        promotionService.deletePromotion(id);
+        return ResponseEntity.noContent().build();
     }
 }

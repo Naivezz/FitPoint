@@ -47,34 +47,22 @@ public class TrainingClassController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TrainingClassDTO> createTrainingClass(@Valid @RequestBody TrainingClassRequest request) {
-        try {
-            TrainingClassDTO trainingClass = trainingClassService.createTrainingClass(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(trainingClass);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        TrainingClassDTO trainingClass = trainingClassService.createTrainingClass(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(trainingClass);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TrainingClassDTO> updateTrainingClass(@PathVariable Long id,
                                                                 @Valid @RequestBody TrainingClassRequest request) {
-        try {
-            TrainingClassDTO trainingClass = trainingClassService.updateTrainingClass(id, request);
-            return ResponseEntity.ok(trainingClass);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        TrainingClassDTO trainingClass = trainingClassService.updateTrainingClass(id, request);
+        return ResponseEntity.ok(trainingClass);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteTrainingClass(@PathVariable Long id) {
-        try {
-            trainingClassService.deleteTrainingClass(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        trainingClassService.deleteTrainingClass(id);
+        return ResponseEntity.noContent().build();
     }
 }

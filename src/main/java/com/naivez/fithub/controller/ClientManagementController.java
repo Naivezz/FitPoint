@@ -26,12 +26,8 @@ public class ClientManagementController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ClientProfileDTO> getClientById(@PathVariable Long id) {
-        try {
-            ClientProfileDTO client = clientManagementService.getClientById(id);
-            return ResponseEntity.ok(client);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        ClientProfileDTO client = clientManagementService.getClientById(id);
+        return ResponseEntity.ok(client);
     }
 
     @GetMapping("/membership-types")

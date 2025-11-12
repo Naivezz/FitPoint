@@ -43,45 +43,29 @@ public class EquipmentController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TRAINER')")
     public ResponseEntity<EquipmentDTO> getEquipmentById(@PathVariable Long id) {
-        try {
-            EquipmentDTO equipment = equipmentService.getEquipmentById(id);
-            return ResponseEntity.ok(equipment);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        EquipmentDTO equipment = equipmentService.getEquipmentById(id);
+        return ResponseEntity.ok(equipment);
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EquipmentDTO> createEquipment(@Valid @RequestBody EquipmentRequest request) {
-        try {
-            EquipmentDTO equipment = equipmentService.createEquipment(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(equipment);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        EquipmentDTO equipment = equipmentService.createEquipment(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(equipment);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EquipmentDTO> updateEquipment(@PathVariable Long id,
                                                         @Valid @RequestBody EquipmentRequest request) {
-        try {
-            EquipmentDTO equipment = equipmentService.updateEquipment(id, request);
-            return ResponseEntity.ok(equipment);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        EquipmentDTO equipment = equipmentService.updateEquipment(id, request);
+        return ResponseEntity.ok(equipment);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteEquipment(@PathVariable Long id) {
-        try {
-            equipmentService.deleteEquipment(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        equipmentService.deleteEquipment(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -28,52 +28,32 @@ public class CouponController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CouponDTO> getCouponById(@PathVariable Long id) {
-        try {
-            CouponDTO coupon = couponService.getCouponById(id);
-            return ResponseEntity.ok(coupon);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        CouponDTO coupon = couponService.getCouponById(id);
+        return ResponseEntity.ok(coupon);
     }
 
     @PostMapping
     public ResponseEntity<CouponDTO> createCoupon(@Valid @RequestBody CouponRequest request) {
-        try {
-            CouponDTO coupon = couponService.createCoupon(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(coupon);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        CouponDTO coupon = couponService.createCoupon(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(coupon);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CouponDTO> updateCoupon(@PathVariable Long id,
                                                   @Valid @RequestBody CouponRequest request) {
-        try {
-            CouponDTO coupon = couponService.updateCoupon(id, request);
-            return ResponseEntity.ok(coupon);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        CouponDTO coupon = couponService.updateCoupon(id, request);
+        return ResponseEntity.ok(coupon);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCoupon(@PathVariable Long id) {
-        try {
-            couponService.deleteCoupon(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        couponService.deleteCoupon(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/deactivate")
     public ResponseEntity<CouponDTO> deactivateCoupon(@PathVariable Long id) {
-        try {
-            CouponDTO coupon = couponService.deactivateCoupon(id);
-            return ResponseEntity.ok(coupon);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        CouponDTO coupon = couponService.deactivateCoupon(id);
+        return ResponseEntity.ok(coupon);
     }
 }

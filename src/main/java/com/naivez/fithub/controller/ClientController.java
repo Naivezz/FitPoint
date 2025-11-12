@@ -35,24 +35,16 @@ public class ClientController {
     public ResponseEntity<ReservationDTO> createReservation(
             @AuthenticationPrincipal UserDetails user,
             @Valid @RequestBody ReservationRequest request) {
-        try {
-            ReservationDTO reservation = reservationService.createReservation(user.getUsername(), request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(reservation);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        ReservationDTO reservation = reservationService.createReservation(user.getUsername(), request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(reservation);
     }
 
     @DeleteMapping("/reservations/{reservationId}")
     public ResponseEntity<Void> cancelReservation(
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long reservationId) {
-        try {
-            reservationService.cancelReservation(user.getUsername(), reservationId);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        reservationService.cancelReservation(user.getUsername(), reservationId);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/reservations/{reservationId}/rate")
@@ -60,12 +52,8 @@ public class ClientController {
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long reservationId,
             @Valid @RequestBody RatingRequest request) {
-        try {
-            reservationService.rateClass(user.getUsername(), reservationId, request);
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        reservationService.rateClass(user.getUsername(), reservationId, request);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/reservations")
@@ -107,24 +95,16 @@ public class ClientController {
     public ResponseEntity<MembershipDTO> purchaseMembership(
             @AuthenticationPrincipal UserDetails user,
             @Valid @RequestBody PurchaseMembershipRequest request) {
-        try {
-            MembershipDTO membership = membershipService.purchaseMembership(user.getUsername(), request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(membership);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        MembershipDTO membership = membershipService.purchaseMembership(user.getUsername(), request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(membership);
     }
 
     @PostMapping("/memberships/topup")
     public ResponseEntity<MembershipDTO> topUpBalance(
             @AuthenticationPrincipal UserDetails user,
             @Valid @RequestBody PurchaseMembershipRequest request) {
-        try {
-            MembershipDTO membership = membershipService.topUpBalance(user.getUsername(), request);
-            return ResponseEntity.ok(membership);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        MembershipDTO membership = membershipService.topUpBalance(user.getUsername(), request);
+        return ResponseEntity.ok(membership);
     }
 
     @GetMapping("/profile")
@@ -138,23 +118,15 @@ public class ClientController {
     public ResponseEntity<UserProfileDTO> updateProfile(
             @AuthenticationPrincipal UserDetails user,
             @Valid @RequestBody UpdateProfileRequest request) {
-        try {
-            UserProfileDTO profile = clientService.updateProfile(user.getUsername(), request);
-            return ResponseEntity.ok(profile);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        UserProfileDTO profile = clientService.updateProfile(user.getUsername(), request);
+        return ResponseEntity.ok(profile);
     }
 
     @PutMapping("/password")
     public ResponseEntity<Void> changePassword(
             @AuthenticationPrincipal UserDetails user,
             @Valid @RequestBody ChangePasswordRequest request) {
-        try {
-            clientService.changePassword(user.getUsername(), request);
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        clientService.changePassword(user.getUsername(), request);
+        return ResponseEntity.ok().build();
     }
 }

@@ -57,12 +57,8 @@ public class TrainerController {
     public ResponseEntity<ScheduleChangeRequestDTO> createScheduleChangeRequest(
             @AuthenticationPrincipal UserDetails user,
             @Valid @RequestBody ScheduleChangeRequestRequest request) {
-        try {
-            ScheduleChangeRequestDTO result = trainerService.createScheduleChangeRequest(user.getUsername(), request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(result);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        ScheduleChangeRequestDTO result = trainerService.createScheduleChangeRequest(user.getUsername(), request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @GetMapping("/schedule/change-requests")
@@ -90,24 +86,16 @@ public class TrainerController {
     public ResponseEntity<ClientProfileDTO> getClientProfile(
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long clientId) {
-        try {
-            ClientProfileDTO client = trainerService.getClientProfile(user.getUsername(), clientId);
-            return ResponseEntity.ok(client);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        ClientProfileDTO client = trainerService.getClientProfile(user.getUsername(), clientId);
+        return ResponseEntity.ok(client);
     }
 
     @PostMapping("/notes")
     public ResponseEntity<TrainerNoteDTO> addClientNote(
             @AuthenticationPrincipal UserDetails user,
             @Valid @RequestBody TrainerNoteRequest request) {
-        try {
-            TrainerNoteDTO note = trainerService.addClientNote(user.getUsername(), request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(note);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        TrainerNoteDTO note = trainerService.addClientNote(user.getUsername(), request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(note);
     }
 
     @PutMapping("/notes/{noteId}")
@@ -115,24 +103,16 @@ public class TrainerController {
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long noteId,
             @Valid @RequestBody TrainerNoteRequest request) {
-        try {
-            TrainerNoteDTO note = trainerService.updateClientNote(user.getUsername(), noteId, request);
-            return ResponseEntity.ok(note);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        TrainerNoteDTO note = trainerService.updateClientNote(user.getUsername(), noteId, request);
+        return ResponseEntity.ok(note);
     }
 
     @DeleteMapping("/notes/{noteId}")
     public ResponseEntity<Void> deleteClientNote(
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long noteId) {
-        try {
-            trainerService.deleteClientNote(user.getUsername(), noteId);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        trainerService.deleteClientNote(user.getUsername(), noteId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/notes")
@@ -146,24 +126,16 @@ public class TrainerController {
     public ResponseEntity<List<TrainerNoteDTO>> getClientNotes(
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long clientId) {
-        try {
-            List<TrainerNoteDTO> notes = trainerService.getClientNotes(user.getUsername(), clientId);
-            return ResponseEntity.ok(notes);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        List<TrainerNoteDTO> notes = trainerService.getClientNotes(user.getUsername(), clientId);
+        return ResponseEntity.ok(notes);
     }
 
     @PostMapping("/personal-sessions")
     public ResponseEntity<PersonalTrainingSessionDTO> createPersonalSession(
             @AuthenticationPrincipal UserDetails user,
             @Valid @RequestBody PersonalTrainingSessionRequest request) {
-        try {
-            PersonalTrainingSessionDTO session = personalTrainingSessionService.createPersonalSession(user.getUsername(), request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(session);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        PersonalTrainingSessionDTO session = personalTrainingSessionService.createPersonalSession(user.getUsername(), request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(session);
     }
 
     @PutMapping("/personal-sessions/{sessionId}")
@@ -171,24 +143,16 @@ public class TrainerController {
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long sessionId,
             @Valid @RequestBody PersonalTrainingSessionRequest request) {
-        try {
-            PersonalTrainingSessionDTO session = personalTrainingSessionService.updatePersonalSession(user.getUsername(), sessionId, request);
-            return ResponseEntity.ok(session);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        PersonalTrainingSessionDTO session = personalTrainingSessionService.updatePersonalSession(user.getUsername(), sessionId, request);
+        return ResponseEntity.ok(session);
     }
 
     @DeleteMapping("/personal-sessions/{sessionId}")
     public ResponseEntity<Void> cancelPersonalSession(
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long sessionId) {
-        try {
-            personalTrainingSessionService.cancelPersonalSession(user.getUsername(), sessionId);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        personalTrainingSessionService.cancelPersonalSession(user.getUsername(), sessionId);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/personal-sessions/{sessionId}/complete")
@@ -196,12 +160,8 @@ public class TrainerController {
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long sessionId,
             @RequestParam(required = false) String sessionNotes) {
-        try {
-            PersonalTrainingSessionDTO session = personalTrainingSessionService.completePersonalSession(user.getUsername(), sessionId, sessionNotes);
-            return ResponseEntity.ok(session);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        PersonalTrainingSessionDTO session = personalTrainingSessionService.completePersonalSession(user.getUsername(), sessionId, sessionNotes);
+        return ResponseEntity.ok(session);
     }
 
     @GetMapping("/personal-sessions")
@@ -224,12 +184,8 @@ public class TrainerController {
     public ResponseEntity<List<UserProfileDTO>> getClassRegistrations(
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long classId) {
-        try {
-            List<UserProfileDTO> registrations = trainerService.getClassRegistrations(user.getUsername(), classId);
-            return ResponseEntity.ok(registrations);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        List<UserProfileDTO> registrations = trainerService.getClassRegistrations(user.getUsername(), classId);
+        return ResponseEntity.ok(registrations);
     }
 
     @GetMapping("/notifications")
@@ -250,12 +206,8 @@ public class TrainerController {
     public ResponseEntity<Void> markNotificationAsRead(
             @AuthenticationPrincipal UserDetails user,
             @PathVariable Long notificationId) {
-        try {
-            notificationService.markAsRead(user.getUsername(), notificationId);
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        notificationService.markAsRead(user.getUsername(), notificationId);
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("/notifications/read-all")
