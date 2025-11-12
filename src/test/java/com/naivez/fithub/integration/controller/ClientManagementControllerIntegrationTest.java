@@ -3,6 +3,7 @@ package com.naivez.fithub.integration.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.naivez.fithub.dto.ClientProfileDTO;
 import com.naivez.fithub.dto.MembershipTypeDTO;
+import com.naivez.fithub.exception.UserNotFoundException;
 import com.naivez.fithub.service.ClientManagementService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -123,7 +124,7 @@ class ClientManagementControllerIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void getClientById_whenClientNotFound_shouldReturnNotFound() throws Exception {
         when(clientManagementService.getClientById(999L))
-                .thenThrow(new RuntimeException("Client not found with id: 999"));
+                .thenThrow(new UserNotFoundException("Client not found with id: 999"));
 
         mockMvc.perform(get("/api/admin/clients/999"))
                 .andExpect(status().isNotFound());

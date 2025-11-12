@@ -2,6 +2,10 @@ package com.naivez.fithub.integration.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.naivez.fithub.dto.*;
+import com.naivez.fithub.exception.ClassFullyBookedException;
+import com.naivez.fithub.exception.IncorrectPasswordException;
+import com.naivez.fithub.exception.InvalidRatingException;
+import com.naivez.fithub.exception.InvalidRequestDataException;
 import com.naivez.fithub.service.ClientService;
 import com.naivez.fithub.service.MembershipService;
 import com.naivez.fithub.service.ReservationService;
@@ -144,7 +148,7 @@ class ClientControllerIntegrationTest {
     @WithMockUser(roles = "CLIENT", username = "user1@gmail.com")
     void createReservation_whenClassFull_shouldReturnBadRequest() throws Exception {
         when(reservationService.createReservation(eq("user1@gmail.com"), any(ReservationRequest.class)))
-                .thenThrow(new RuntimeException("Class is fully booked"));
+                .thenThrow(new ClassFullyBookedException("Class is fully booked"));
 
         mockMvc.perform(post("/api/client/reservations")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -218,7 +222,7 @@ class ClientControllerIntegrationTest {
                 .build();
 
         when(membershipService.purchaseMembership(eq("user1@gmail.com"), any(PurchaseMembershipRequest.class)))
-                .thenThrow(new RuntimeException("Invalid membership type"));
+                .thenThrow(new InvalidRequestDataException("Invalid membership type"));
 
         mockMvc.perform(post("/api/client/memberships/purchase")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -326,7 +330,7 @@ class ClientControllerIntegrationTest {
                 .comment("Great class!")
                 .build();
 
-        doThrow(new RuntimeException("Cannot rate class")).when(reservationService)
+        doThrow(new InvalidRatingException("Cannot rate class")).when(reservationService)
                 .rateClass(eq("user1@gmail.com"), eq(1L), any(RatingRequest.class));
 
         mockMvc.perform(put("/api/client/reservations/1/rate")
@@ -355,7 +359,7 @@ class ClientControllerIntegrationTest {
     @WithMockUser(roles = "CLIENT", username = "user1@gmail.com")
     void topUpBalance_whenServiceThrowsException_shouldReturnBadRequest() throws Exception {
         when(membershipService.topUpBalance(eq("user1@gmail.com"), any(PurchaseMembershipRequest.class)))
-                .thenThrow(new RuntimeException("Top up failed"));
+                .thenThrow(new InvalidRequestDataException("Top up failed"));
 
         mockMvc.perform(post("/api/client/memberships/topup")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -387,7 +391,7 @@ class ClientControllerIntegrationTest {
                 .newPassword("newPassword123")
                 .build();
 
-        doThrow(new RuntimeException("Password change failed")).when(clientService)
+        doThrow(new IncorrectPasswordException("Password change failed")).when(clientService)
                 .changePassword(eq("user1@gmail.com"), any(ChangePasswordRequest.class));
 
         mockMvc.perform(put("/api/client/password")

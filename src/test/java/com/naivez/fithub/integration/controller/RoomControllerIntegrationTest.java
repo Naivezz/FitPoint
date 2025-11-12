@@ -3,6 +3,7 @@ package com.naivez.fithub.integration.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.naivez.fithub.dto.RoomDTO;
 import com.naivez.fithub.dto.RoomRequest;
+import com.naivez.fithub.exception.EntityNotFoundException;
 import com.naivez.fithub.service.RoomService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -107,7 +108,7 @@ class RoomControllerIntegrationTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void getRoomById_whenNotFound_shouldReturnNotFound() throws Exception {
-        when(roomService.getRoomById(999L)).thenThrow(new RuntimeException("Room not found with id: 999"));
+        when(roomService.getRoomById(999L)).thenThrow(new EntityNotFoundException("Room not found with id: 999"));
 
         mockMvc.perform(get("/api/rooms/999"))
                 .andExpect(status().isNotFound());
@@ -163,14 +164,14 @@ class RoomControllerIntegrationTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void updateRoom_whenNotFound_shouldReturnBadRequest() throws Exception {
+    void updateRoom_whenNotFound_shouldReturnNotFound() throws Exception {
         when(roomService.updateRoom(eq(999L), any(RoomRequest.class)))
-                .thenThrow(new RuntimeException("Room not found"));
+                .thenThrow(new EntityNotFoundException("Room not found"));
 
         mockMvc.perform(put("/api/rooms/999")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testRoomRequest)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
 
         verify(roomService).updateRoom(eq(999L), any(RoomRequest.class));
     }
@@ -186,11 +187,11 @@ class RoomControllerIntegrationTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void deleteRoom_whenNotFound_shouldReturnBadRequest() throws Exception {
-        doThrow(new RuntimeException("Room not found")).when(roomService).deleteRoom(999L);
+    void deleteRoom_whenNotFound_shouldReturnNotFound() throws Exception {
+        doThrow(new EntityNotFoundException("Room not found")).when(roomService).deleteRoom(999L);
 
         mockMvc.perform(delete("/api/rooms/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
 
         verify(roomService).deleteRoom(999L);
     }

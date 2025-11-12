@@ -2,6 +2,9 @@ package com.naivez.fithub.integration.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.naivez.fithub.dto.*;
+import com.naivez.fithub.exception.EmailAlreadyExistsException;
+import com.naivez.fithub.exception.EntityNotFoundException;
+import com.naivez.fithub.exception.UserNotFoundException;
 import com.naivez.fithub.service.EmployeeService;
 import com.naivez.fithub.service.ScheduleChangeRequestService;
 import org.junit.jupiter.api.BeforeEach;
@@ -124,7 +127,7 @@ class AdminControllerIntegrationTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void getEmployeeById_whenEmployeeNotFound_shouldReturnNotFound() throws Exception {
-        when(employeeService.getEmployeeById(999L)).thenThrow(new RuntimeException("Employee not found"));
+        when(employeeService.getEmployeeById(999L)).thenThrow(new UserNotFoundException("Employee not found"));
 
         mockMvc.perform(get("/api/admin/employees/999"))
                 .andExpect(status().isNotFound());
@@ -150,7 +153,7 @@ class AdminControllerIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void createEmployee_whenEmailAlreadyExists_shouldReturnBadRequest() throws Exception {
         when(employeeService.createEmployee(any(CreateEmployeeRequest.class)))
-                .thenThrow(new RuntimeException("Email already exists"));
+                .thenThrow(new EmailAlreadyExistsException("Email already exists"));
 
         mockMvc.perform(post("/api/admin/employees")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -215,7 +218,7 @@ class AdminControllerIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void getScheduleChangeRequestById_whenRequestNotFound_shouldReturnNotFound() throws Exception {
         when(scheduleChangeRequestService.getScheduleChangeRequestById(999L))
-                .thenThrow(new RuntimeException("Request not found"));
+                .thenThrow(new EntityNotFoundException("Request not found"));
 
         mockMvc.perform(get("/api/admin/schedule-change-requests/999"))
                 .andExpect(status().isNotFound());
@@ -246,14 +249,14 @@ class AdminControllerIntegrationTest {
 
     @Test
     @WithMockUser(roles = "ADMIN", username = "admin1@gmail.com")
-    void reviewScheduleChangeRequest_whenRequestNotFound_shouldReturnBadRequest() throws Exception {
+    void reviewScheduleChangeRequest_whenRequestNotFound_shouldReturnNotFound() throws Exception {
         when(scheduleChangeRequestService.reviewScheduleChangeRequest(eq(999L), eq("admin1@gmail.com"), any(ReviewScheduleChangeRequest.class)))
-                .thenThrow(new RuntimeException("Request not found"));
+                .thenThrow(new EntityNotFoundException("Request not found"));
 
         mockMvc.perform(put("/api/admin/schedule-change-requests/999/review")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(reviewRequest)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

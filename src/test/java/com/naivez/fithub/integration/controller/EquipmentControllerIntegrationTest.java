@@ -3,6 +3,7 @@ package com.naivez.fithub.integration.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.naivez.fithub.dto.EquipmentDTO;
 import com.naivez.fithub.dto.EquipmentRequest;
+import com.naivez.fithub.exception.EntityNotFoundException;
 import com.naivez.fithub.service.EquipmentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -98,7 +99,7 @@ class EquipmentControllerIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void getEquipmentById_withInvalidId_shouldReturnNotFound() throws Exception {
         when(equipmentService.getEquipmentById(999L))
-                .thenThrow(new RuntimeException("Equipment not found"));
+                .thenThrow(new EntityNotFoundException("Equipment not found"));
 
         mockMvc.perform(get("/api/equipment/999"))
                 .andExpect(status().isNotFound());
@@ -154,14 +155,14 @@ class EquipmentControllerIntegrationTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void updateEquipment_withInvalidId_shouldReturnBadRequest() throws Exception {
+    void updateEquipment_withInvalidId_shouldReturnNotFound() throws Exception {
         when(equipmentService.updateEquipment(eq(999L), any(EquipmentRequest.class)))
-                .thenThrow(new RuntimeException("Equipment not found"));
+                .thenThrow(new EntityNotFoundException("Equipment not found"));
 
         mockMvc.perform(put("/api/equipment/999")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(equipmentRequest)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -175,12 +176,12 @@ class EquipmentControllerIntegrationTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void deleteEquipment_withInvalidId_shouldReturnBadRequest() throws Exception {
-        doThrow(new RuntimeException("Equipment not found"))
+    void deleteEquipment_withInvalidId_shouldReturnNotFound() throws Exception {
+        doThrow(new EntityNotFoundException("Equipment not found"))
                 .when(equipmentService).deleteEquipment(999L);
 
         mockMvc.perform(delete("/api/equipment/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

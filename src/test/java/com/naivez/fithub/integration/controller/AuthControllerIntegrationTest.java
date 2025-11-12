@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.naivez.fithub.dto.AuthResponse;
 import com.naivez.fithub.dto.LoginRequest;
 import com.naivez.fithub.dto.RegisterRequest;
+import com.naivez.fithub.exception.EmailAlreadyExistsException;
 import com.naivez.fithub.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -79,7 +81,7 @@ class AuthControllerIntegrationTest {
     @Test
     void register_whenEmailAlreadyExists_shouldReturnBadRequest() throws Exception {
         when(authService.register(any(RegisterRequest.class)))
-                .thenThrow(new RuntimeException("Email already exists"));
+                .thenThrow(new EmailAlreadyExistsException("Email already exists"));
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -119,13 +121,13 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    void login_withInvalidCredentials_shouldReturnBadRequest() throws Exception {
+    void login_withInvalidCredentials_shouldReturnUnauthorized() throws Exception {
         when(authService.login(any(LoginRequest.class)))
-                .thenThrow(new RuntimeException("Invalid credentials"));
+                .thenThrow(new BadCredentialsException("Invalid credentials"));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testLoginRequest)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
     }
 }

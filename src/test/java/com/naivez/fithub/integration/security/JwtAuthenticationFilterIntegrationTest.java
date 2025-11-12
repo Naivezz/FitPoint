@@ -160,7 +160,7 @@ class JwtAuthenticationFilterIntegrationTest {
 
     @Test
     void doFilterInternal_WhenAuthHeaderDoesNotStartWithBearer_ShouldContinueFilterChain() throws Exception {
-        request.addHeader("Authorization", "Basic " + VALID_TOKEN); // Не Bearer
+        request.addHeader("Authorization", "Basic " + VALID_TOKEN);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 

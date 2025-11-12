@@ -3,6 +3,7 @@ package com.naivez.fithub.integration.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.naivez.fithub.dto.PromotionDTO;
 import com.naivez.fithub.dto.PromotionRequest;
+import com.naivez.fithub.exception.EntityNotFoundException;
 import com.naivez.fithub.service.PromotionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -117,7 +118,7 @@ class PromotionControllerIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void getPromotionById_whenPromotionNotFound_shouldReturnNotFound() throws Exception {
         when(promotionService.getPromotionById(999L))
-                .thenThrow(new RuntimeException("Promotion not found with id: 999"));
+                .thenThrow(new EntityNotFoundException("Promotion not found with id: 999"));
 
         mockMvc.perform(get("/api/promotions/999"))
                 .andExpect(status().isNotFound());
@@ -156,14 +157,14 @@ class PromotionControllerIntegrationTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void updatePromotion_whenPromotionNotFound_shouldReturnBadRequest() throws Exception {
+    void updatePromotion_whenPromotionNotFound_shouldReturnNotFound() throws Exception {
         when(promotionService.updatePromotion(eq(999L), any(PromotionRequest.class)))
-                .thenThrow(new RuntimeException("Promotion not found with id: 999"));
+                .thenThrow(new EntityNotFoundException("Promotion not found with id: 999"));
 
         mockMvc.perform(put("/api/promotions/999")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testPromotionRequest)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -179,11 +180,11 @@ class PromotionControllerIntegrationTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void deletePromotion_whenPromotionNotFound_shouldReturnBadRequest() throws Exception {
-        doThrow(new RuntimeException("Promotion not found with id: 999"))
+    void deletePromotion_whenPromotionNotFound_shouldReturnNotFound() throws Exception {
+        doThrow(new EntityNotFoundException("Promotion not found with id: 999"))
                 .when(promotionService).deletePromotion(999L);
 
         mockMvc.perform(delete("/api/promotions/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 }

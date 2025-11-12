@@ -2,6 +2,7 @@ package com.naivez.fithub.integration.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.naivez.fithub.dto.*;
+import com.naivez.fithub.exception.UserNotFoundException;
 import com.naivez.fithub.service.NotificationService;
 import com.naivez.fithub.service.PersonalTrainingSessionService;
 import com.naivez.fithub.service.TrainerService;
@@ -274,12 +275,12 @@ class TrainerControllerIntegrationTest {
 
     @Test
     @WithMockUser(roles = "TRAINER", username = "trainer1@gmail.com")
-    void getClientProfile_whenClientNotFound_shouldReturnBadRequest() throws Exception {
+    void getClientProfile_whenClientNotFound_shouldReturnNotFound() throws Exception {
         when(trainerService.getClientProfile("trainer1@gmail.com", 999L))
-                .thenThrow(new RuntimeException("Client not found"));
+                .thenThrow(new UserNotFoundException("Client not found"));
 
         mockMvc.perform(get("/api/trainer/clients/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.naivez.fithub.integration.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.naivez.fithub.dto.CouponDTO;
 import com.naivez.fithub.dto.CouponRequest;
+import com.naivez.fithub.exception.EntityNotFoundException;
 import com.naivez.fithub.service.CouponService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -102,7 +103,7 @@ class CouponControllerIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void getCouponById_whenCouponNotFound_shouldReturnNotFound() throws Exception {
         when(couponService.getCouponById(999L))
-                .thenThrow(new RuntimeException("Coupon not found with id: 999"));
+                .thenThrow(new EntityNotFoundException("Coupon not found with id: 999"));
 
         mockMvc.perform(get("/api/coupons/999"))
                 .andExpect(status().isNotFound());
@@ -166,14 +167,14 @@ class CouponControllerIntegrationTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void updateCoupon_whenCouponNotFound_shouldReturnBadRequest() throws Exception {
+    void updateCoupon_whenCouponNotFound_shouldReturnNotFound() throws Exception {
         when(couponService.updateCoupon(eq(999L), any(CouponRequest.class)))
-                .thenThrow(new RuntimeException("Coupon not found with id: 999"));
+                .thenThrow(new EntityNotFoundException("Coupon not found with id: 999"));
 
         mockMvc.perform(put("/api/coupons/999")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testCouponRequest)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -189,12 +190,12 @@ class CouponControllerIntegrationTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void deleteCoupon_whenCouponNotFound_shouldReturnBadRequest() throws Exception {
-        doThrow(new RuntimeException("Coupon not found with id: 999"))
+    void deleteCoupon_whenCouponNotFound_shouldReturnNotFound() throws Exception {
+        doThrow(new EntityNotFoundException("Coupon not found with id: 999"))
                 .when(couponService).deleteCoupon(999L);
 
         mockMvc.perform(delete("/api/coupons/999"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -221,11 +222,11 @@ class CouponControllerIntegrationTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void deactivateCoupon_whenCouponNotFound_shouldReturnBadRequest() throws Exception {
+    void deactivateCoupon_whenCouponNotFound_shouldReturnNotFound() throws Exception {
         when(couponService.deactivateCoupon(999L))
-                .thenThrow(new RuntimeException("Coupon not found with id: 999"));
+                .thenThrow(new EntityNotFoundException("Coupon not found with id: 999"));
 
         mockMvc.perform(put("/api/coupons/999/deactivate"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 }
