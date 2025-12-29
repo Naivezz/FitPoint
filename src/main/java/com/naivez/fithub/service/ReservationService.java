@@ -34,6 +34,7 @@ public class ReservationService {
     private final UserRepository userRepository;
     private final ReservationMapper reservationMapper;
     private final TrainingClassMapper trainingClassMapper;
+    private MembershipService membershipService;
 
     public List<TrainingClassDTO> getAvailableClasses() {
         LocalDateTime now = LocalDateTime.now();
@@ -50,6 +51,11 @@ public class ReservationService {
 
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email: " + userEmail));
+
+        if (!membershipService.hasActiveMembership(userEmail)) {
+            log.warn("Reservation failed - no active membership for user: {}", userEmail);
+            throw new NoActiveMembershipException("You must have an active membership to reserve a class");
+        }
 
         TrainingClass trainingClass = trainingClassRepository.findById(request.getTrainingClassId())
                 .orElseThrow(() -> new EntityNotFoundException("Training class not found"));
