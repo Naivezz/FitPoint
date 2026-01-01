@@ -1,6 +1,7 @@
 package com.naivez.fithub.repository;
 
 import com.naivez.fithub.entity.PersonalTrainingSession;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,6 +11,7 @@ import java.util.List;
 
 public interface PersonalTrainingSessionRepository extends JpaRepository<PersonalTrainingSession, Long> {
 
+    @EntityGraph(attributePaths = {"client", "client.roles"})
     @Query("SELECT pts FROM PersonalTrainingSession pts WHERE pts.trainer.id = :trainerId ORDER BY pts.startTime DESC")
     List<PersonalTrainingSession> findByTrainerId(@Param("trainerId") Long trainerId);
 
