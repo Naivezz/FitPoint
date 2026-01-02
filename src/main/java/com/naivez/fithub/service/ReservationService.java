@@ -34,7 +34,7 @@ public class ReservationService {
     private final UserRepository userRepository;
     private final ReservationMapper reservationMapper;
     private final TrainingClassMapper trainingClassMapper;
-    private MembershipService membershipService;
+    private final MembershipService membershipService;
 
     public List<TrainingClassDTO> getAvailableClasses() {
         LocalDateTime now = LocalDateTime.now();
