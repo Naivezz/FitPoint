@@ -187,33 +187,4 @@ public class TrainerController {
         List<UserProfileDTO> registrations = trainerService.getClassRegistrations(user.getUsername(), classId);
         return ResponseEntity.ok(registrations);
     }
-
-    @GetMapping("/notifications")
-    public ResponseEntity<List<NotificationDTO>> getNotifications(
-            @AuthenticationPrincipal UserDetails user) {
-        List<NotificationDTO> notifications = notificationService.getUserNotifications(user.getUsername());
-        return ResponseEntity.ok(notifications);
-    }
-
-    @GetMapping("/notifications/unread")
-    public ResponseEntity<List<NotificationDTO>> getUnreadNotifications(
-            @AuthenticationPrincipal UserDetails user) {
-        List<NotificationDTO> notifications = notificationService.getUnreadNotifications(user.getUsername());
-        return ResponseEntity.ok(notifications);
-    }
-
-    @PutMapping("/notifications/{notificationId}/read")
-    public ResponseEntity<Void> markNotificationAsRead(
-            @AuthenticationPrincipal UserDetails user,
-            @PathVariable Long notificationId) {
-        notificationService.markAsRead(user.getUsername(), notificationId);
-        return ResponseEntity.ok().build();
-    }
-
-    @PutMapping("/notifications/read-all")
-    public ResponseEntity<Void> markAllNotificationsAsRead(
-            @AuthenticationPrincipal UserDetails user) {
-        notificationService.markAllAsRead(user.getUsername());
-        return ResponseEntity.ok().build();
-    }
 }
