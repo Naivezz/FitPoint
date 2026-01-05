@@ -1,7 +1,9 @@
 package com.naivez.fithub.controller;
 
+import com.naivez.fithub.dto.CreateNotificationRequest;
 import com.naivez.fithub.dto.NotificationDTO;
 import com.naivez.fithub.service.NotificationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,15 +18,6 @@ import java.util.List;
 public class NotificationController {
 
     private final NotificationService notificationService;
-
-    @PostMapping
-    public ResponseEntity<Void> createNotification(@RequestBody NotificationDTO notificationDTO) {
-        notificationService.createNotification(
-                notificationDTO.getRecipientEmail(),
-                notificationDTO.getMessage()
-        );
-        return ResponseEntity.ok().build();
-    }
 
     @GetMapping
     public ResponseEntity<List<NotificationDTO>> getUserNotifications(
@@ -63,5 +56,14 @@ public class NotificationController {
         List<NotificationDTO> notifications =
                 notificationService.getUnreadNotifications(userDetails.getUsername());
         return ResponseEntity.ok(notifications.size());
+    }
+
+    @PostMapping
+    public ResponseEntity<Void> createNotification(@RequestBody @Valid CreateNotificationRequest request) {
+        notificationService.createNotification(
+                request.getRecipientEmail(),
+                request.getMessage()
+        );
+        return ResponseEntity.ok().build();
     }
 }
