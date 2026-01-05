@@ -35,6 +35,7 @@ public class ReservationService {
     private final ReservationMapper reservationMapper;
     private final TrainingClassMapper trainingClassMapper;
     private final MembershipService membershipService;
+    private final NotificationService notificationService;
 
     public List<TrainingClassDTO> getAvailableClasses() {
         LocalDateTime now = LocalDateTime.now();
@@ -84,6 +85,12 @@ public class ReservationService {
                 .build();
 
         reservation = reservationRepository.save(reservation);
+
+        notificationService.createNotification(
+                trainingClass.getTrainer(),
+                "New reservation for your class on " + trainingClass.getStartTime()
+        );
+
         log.info("Reservation created successfully - id: {}, user: {}, class: {}",
                 reservation.getId(), userEmail, trainingClass.getId());
 
@@ -122,6 +129,13 @@ public class ReservationService {
 
         reservation.setStatus("CANCELLED");
         reservationRepository.save(reservation);
+
+        notificationService.createNotification(
+                reservation.getTrainingClass().getTrainer(),
+                "Reservation was cancelled for your class on " +
+                        reservation.getTrainingClass().getStartTime()
+        );
+
         log.info("Reservation cancelled successfully - id: {}, user: {}", reservationId, userEmail);
     }
 

@@ -33,6 +33,7 @@ public class ScheduleChangeRequestService {
     private final UserRepository userRepository;
     private final TrainingClassRepository trainingClassRepository;
     private final ScheduleChangeRequestMapper scheduleChangeRequestMapper;
+    private final NotificationService notificationService;
 
     public List<ScheduleChangeRequestDTO> getAllScheduleChangeRequests() {
         return scheduleChangeRequestRepository.findAll().stream()
@@ -87,6 +88,13 @@ public class ScheduleChangeRequestService {
         }
 
         request = scheduleChangeRequestRepository.save(request);
+
+        String message = "Your schedule change request has been " + status.toLowerCase();
+
+        notificationService.createNotification(
+                request.getTrainer(),
+                message
+        );
         log.info("Schedule change request reviewed successfully - id: {}, status: {}, admin: {}",
                 id, status, adminEmail);
 
