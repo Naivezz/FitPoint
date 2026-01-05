@@ -99,6 +99,14 @@ public class NotificationService {
     }
 
     @Transactional
+    public void createNotification(String recipientEmail, String message) {
+        User recipient = userRepository.findByEmail(recipientEmail)
+                .orElseThrow(() -> new RuntimeException("User not found: " + recipientEmail));
+
+        createNotification(recipient, message);
+    }
+
+    @Transactional
     public void createNotificationByUserId(Long recipientId, String message) {
         User recipient = userRepository.findById(recipientId)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + recipientId));

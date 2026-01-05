@@ -17,6 +17,15 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
+    @PostMapping
+    public ResponseEntity<Void> createNotification(@RequestBody NotificationDTO notificationDTO) {
+        notificationService.createNotification(
+                notificationDTO.getRecipientEmail(),
+                notificationDTO.getMessage()
+        );
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping
     public ResponseEntity<List<NotificationDTO>> getUserNotifications(
             @AuthenticationPrincipal UserDetails userDetails) {

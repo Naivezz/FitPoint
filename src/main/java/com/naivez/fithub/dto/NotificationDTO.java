@@ -17,4 +17,5 @@ public class NotificationDTO {
     private String message;
     private LocalDateTime sentAt;
     private boolean read;
+    private String recipientEmail;
 }
