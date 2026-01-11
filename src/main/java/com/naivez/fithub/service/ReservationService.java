@@ -37,14 +37,6 @@ public class ReservationService {
     private final MembershipService membershipService;
     private final NotificationService notificationService;
 
-    public List<TrainingClassDTO> getAvailableClasses() {
-        LocalDateTime now = LocalDateTime.now();
-        List<TrainingClass> classes = trainingClassRepository.findUpcomingClasses(now);
-
-        return classes.stream()
-                .map(trainingClassMapper::toDto)
-                .collect(Collectors.toList());
-    }
 
     @Transactional
     public ReservationDTO createReservation(String userEmail, ReservationRequest request) {
@@ -96,6 +88,17 @@ public class ReservationService {
 
         return reservationMapper.toDto(reservation);
     }
+
+
+    public List<TrainingClassDTO> getAvailableClasses() {
+        LocalDateTime now = LocalDateTime.now();
+        List<TrainingClass> classes = trainingClassRepository.findUpcomingClasses(now);
+
+        return classes.stream()
+                .map(trainingClassMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
 
     @Transactional
     public void cancelReservation(String userEmail, Long reservationId) {
